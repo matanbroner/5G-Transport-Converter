@@ -27,12 +27,6 @@ void parse_convert(char *buffer)
     struct convert_opts *opts;
     int length;
 
-    if (length < CONVERT_HDR_LEN)
-    {
-        printf("provided buffer is too small to contain the convert header\n");
-        return;
-    }
-
     if (convert_parse_header(hdr, CONVERT_HDR_LEN, &length) < 0)
     {
         printf("unable to read the convert header\n");
@@ -58,7 +52,7 @@ int main()
 {
     // Open a server socket and listen for connections
     // Server is an MPTCP socket
-    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_MPTCP);
+    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
     if (sockfd < 0)
     {
         perror("socket() error: ");
@@ -87,25 +81,22 @@ int main()
             perror("recvfrom() error: ");
             continue;
         }
-        printf("Received packet\n");
 
         // Parse the TCP headers
         struct tcp_packet *tcp = (struct tcp_packet *)buf;
         struct tcp_header *tcp_hdr = &tcp->tcphdr;
         struct ip_header *ip_hdr = &tcp->iphdr;
 
+        // filter packets to port 8081
+        if (ntohs(tcp_hdr->th_dport) != 8081)
+            continue;
+
         // Parse the Convert headers
         char *convert_hdr = tcp->data;
         parse_convert(convert_hdr);
 
         // Log the packet
-        printf("Received packet from %s:%d to %s:%d\n",
-               "TCP Header: seq=%u, ack=%u, flags=%u, window=%u, checksum=%u, urgent=%u\n",
-               "IP Header: src=%s, dst=%s, protocol=%u, checksum=%u\n",
-               inet_ntoa(ip_hdr->ip_src), ntohs(tcp_hdr->th_sport),
-               inet_ntoa(ip_hdr->ip_dst), ntohs(tcp_hdr->th_dport),
-               ntohl(tcp_hdr->th_seq), ntohl(tcp_hdr->th_ack), tcp_hdr->th_flags, ntohs(tcp_hdr->th_win), ntohs(tcp_hdr->th_sum), ntohs(tcp_hdr->th_urp),
-               inet_ntoa(ip_hdr->ip_src), inet_ntoa(ip_hdr->ip_dst), ip_hdr->ip_p, ntohs(ip_hdr->ip_sum));
+        printf("Received packet from %s:%d to %s:%d\n", inet_ntoa(ip_hdr->ip_src), ntohs(tcp_hdr->th_sport), inet_ntoa(ip_hdr->ip_dst), ntohs(tcp_hdr->th_dport));
     }
     return 0;
 }
