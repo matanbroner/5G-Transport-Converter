@@ -45,6 +45,19 @@ void parse_convert(char *buffer)
             printf("received TLV error: %u\n", opts->error_code);
             convert_free_opts(opts);
         }
+
+        // print the options
+        for (int i = 0; i < sizeof(opts) / sizeof(opts[0]); i++)
+        {
+            if(opts[i].flags | CONVERT_F_CONNECT)
+            {
+                char str[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET, &(opts[i].remote_addr), str, INET6_ADDRSTRLEN);
+
+                printf("Received TLV connect\n");
+                printf(" -> remote_addr: %s\n", str);
+            }
+        }
     }
 }
 
@@ -91,12 +104,16 @@ int main()
         if (ntohs(tcp_hdr->th_dport) != 8081)
             continue;
 
+        // Log the packet
+        printf("Received packet from %s:%d to %s:%d\n",
+               inet_ntoa(ip_hdr->ip_src),
+               ntohs(tcp_hdr->th_sport),
+               inet_ntoa(ip_hdr->ip_dst),
+               ntohs(tcp_hdr->th_dport));
+
         // Parse the Convert headers
         char *convert_hdr = tcp->data;
         parse_convert(convert_hdr);
-
-        // Log the packet
-        printf("Received packet from %s:%d to %s:%d\n", inet_ntoa(ip_hdr->ip_src), ntohs(tcp_hdr->th_sport), inet_ntoa(ip_hdr->ip_dst), ntohs(tcp_hdr->th_dport));
     }
     return 0;
 }
