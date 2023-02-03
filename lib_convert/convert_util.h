@@ -49,8 +49,10 @@
 #define CONVERT_PADDING 4
 #define __CONVERT_ALIGN(x, a) (((x) + (a - 1)) & ~(a - 1))
 #define CONVERT_ALIGN(bytes) __CONVERT_ALIGN(bytes, CONVERT_PADDING)
+#define CONVERT_HDR_LEN sizeof(struct convert_header)
 
-enum {
+enum
+{
 	_CONVERT_F_INFO = 0,
 	_CONVERT_F_CONNECT,
 	_CONVERT_F_EXTENDED_TCP_HDR,
@@ -60,42 +62,42 @@ enum {
 	_CONVERT_F_MAX,
 };
 
-enum {
-	CONVERT_F_INFO			= (1 << _CONVERT_F_INFO),
-	CONVERT_F_CONNECT		= (1 << _CONVERT_F_CONNECT),
-	CONVERT_F_EXTENDED_TCP_HDR	= (1 << _CONVERT_F_EXTENDED_TCP_HDR),
-	CONVERT_F_SUPPORTED_TCP_EXT	= (1 << _CONVERT_F_SUPPORTED_TCP_EXT),
-	CONVERT_F_COOKIE		= (1 << _CONVERT_F_COOKIE),
-	CONVERT_F_ERROR			= (1 << _CONVERT_F_ERROR),
+enum
+{
+	CONVERT_F_INFO = (1 << _CONVERT_F_INFO),
+	CONVERT_F_CONNECT = (1 << _CONVERT_F_CONNECT),
+	CONVERT_F_EXTENDED_TCP_HDR = (1 << _CONVERT_F_EXTENDED_TCP_HDR),
+	CONVERT_F_SUPPORTED_TCP_EXT = (1 << _CONVERT_F_SUPPORTED_TCP_EXT),
+	CONVERT_F_COOKIE = (1 << _CONVERT_F_COOKIE),
+	CONVERT_F_ERROR = (1 << _CONVERT_F_ERROR),
 };
 
-struct convert_opts {
-	uint8_t			flags;
+struct convert_opts
+{
+	uint8_t flags;
 
 	/* if CONVERT_F_CONNECT is set in flags
 	 * The sin_port and sin_addr members shall be in network byte order.
 	 */
-	struct sockaddr_in6	remote_addr;
+	struct sockaddr_in6 remote_addr;
 
 	/* if CONVERT_F_ERROR is set in flags */
-	uint8_t			error_code;
+	uint8_t error_code;
 
 	/* if CONVERT_F_EXTENDED_TCP_HDR is set in flags */
-	uint8_t *		tcp_options;
-	size_t			tcp_options_len;
+	uint8_t *tcp_options;
+	size_t tcp_options_len;
 
 	/* if CONVERT_F_COOKIE is set in flags */
-	uint8_t *		cookie_data;
-	size_t			cookie_len;
+	uint8_t *cookie_data;
+	size_t cookie_len;
 
 	/* TODO extend to support more TLVs. */
 };
 
-void
-convert_free_opts(struct convert_opts *opts);
+void convert_free_opts(struct convert_opts *opts);
 
-int
-convert_parse_header(const uint8_t *buff, size_t buff_len, size_t *tlvs_length);
+int convert_parse_header(const uint8_t *buff, size_t buff_len, size_t *tlvs_length);
 
 /* Returns a pointer to struct convert_opts, which must be freed by the caller
  * using convert_free_opts(). Returns NULL upon failure.
@@ -105,5 +107,7 @@ convert_parse_tlvs(const uint8_t *buff, size_t buff_len);
 
 ssize_t
 convert_write(uint8_t *buff, size_t buff_len, const struct convert_opts *opts);
+
+struct convert_opts *read_convert_opts(int fd, bool peek, int* error_code, char* error_message);
 
 #endif

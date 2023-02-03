@@ -18,84 +18,6 @@
 #include "../lib_convert/convert_util.h"
 #include "net_headers.h"
 
-#define CONVERT_HDR_LEN sizeof(struct convert_header)
-#define MAX_PACKET_SIZE 1500
-
-void read_convert(int sockfd, bool peek)
-{
-    uint8_t hdr[CONVERT_HDR_LEN];
-    int ret;
-    int flag = peek ? MSG_PEEK : 0;
-    size_t length;
-    size_t offset = peek ? CONVERT_HDR_LEN : 0;
-    struct convert_opts *opts;
-
-    printf("peek fd %d to see whether data is in the receive "
-           "queue\n",
-           sockfd);
-
-    ret = recvfrom(sockfd, hdr, CONVERT_HDR_LEN, MSG_WAITALL | flag, NULL, NULL);
-
-    printf("peek returned %d\n", ret);
-    if (ret < 0)
-    {
-        return;
-    }
-
-    if (convert_parse_header(hdr, ret, &length) < 0)
-    {
-        printf("[%d] unable to read the convert header\n",
-               sockfd);
-        goto error;
-    }
-
-    if (length)
-    {
-        uint8_t buffer[length + offset];
-
-        /* if peek the data was not yet read, so we need to
-         * also read (again the main header). */
-        if (peek)
-            length += CONVERT_HDR_LEN;
-
-        ret = recvfrom(sockfd, buffer, length, MSG_WAITALL, NULL, NULL);
-        if (ret != (int)length || ret < 0)
-        {
-            printf("[%d] unable to read the convert"
-                   " tlvs\n",
-                   sockfd);
-            goto error;
-        }
-
-        opts = convert_parse_tlvs(buffer + offset, length - offset);
-        if (opts == NULL)
-            goto error;
-
-        /* if we receive the TLV error we need to inform the app */
-        if (opts->flags & CONVERT_F_ERROR)
-        {
-            printf("received TLV error: %u\n", opts->error_code);
-            convert_free_opts(opts);
-        }
-
-        // Check if CONNECT
-        if (opts->flags & CONVERT_F_CONNECT)
-        {
-            char addr[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, &opts->remote_addr.sin6_addr, addr, INET6_ADDRSTRLEN);
-
-            printf("Received CONNECT\n");
-            // Print the actual destination IP and port (struct sockaddr_in6 remote_addr in opts)
-            printf("Remote IP: %s, Port: %d\n", addr, ntohs(opts->remote_addr.sin6_port));
-        }
-    }
-
-error:
-    /* ensure that a RST will be sent to the converter. */
-    struct linger linger = {1, 0};
-    setsockopt(sockfd, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger));
-}
-
 int main()
 {
     // Open a server socket and listen for connections
@@ -136,7 +58,23 @@ int main()
             return 1;
         }
         // Read the Convert headers and TLVs from the client (readr)
-        read_convert(connfd, false);
+        int err_code = 0;
+        char error_msg[256];
+        bool peek = false;
+        struct convert_opts *opts = read_convert_opts(connfd, peek, &err_code, error_msg);
+
+        // Check for errors
+        if (err_code != 0)
+        {
+            printf("Error: [%d] %s\n", err_code, error_msg);
+        }
+        else
+        {
+            // Check the returned TLVs
+            if(opts != NULL)
+            {
+            }
+        }
 
         // Close the connection
         close(connfd);

@@ -36,6 +36,8 @@
 
 #include <stdint.h>
 #include <netinet/in.h>
+#include <stdbool.h>
+#include <errno.h>
 
 #define CONVERT_VERSION 1
 #define CONVERT_MAGIC_NO 0x2263
