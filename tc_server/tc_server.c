@@ -127,6 +127,7 @@ int main()
         // Read the Convert headers and TLVs from the client (readr)
         read_convert(connfd, false);
 
-        return 0;
+        // Close the connection
+        close(connfd);
     }
 }
