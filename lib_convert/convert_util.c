@@ -366,65 +366,66 @@ convert_write(uint8_t *buff, size_t buff_len, const struct convert_opts *opts)
 	return length;
 }
 
-struct convert_opts *read_convert_opts(int fd, bool peek, int* error_code, char* error_message)
+struct convert_opts *read_convert_opts(int fd, bool peek, int *error_code, char *error_message)
 {
 	uint8_t hdr[CONVERT_HDR_LEN];
-    int ret;
-    int flag = peek ? MSG_PEEK : 0;
-    size_t length;
-    size_t offset = peek ? CONVERT_HDR_LEN : 0;
-    struct convert_opts *opts;
+	int ret;
+	int flag = peek ? MSG_PEEK : 0;
+	size_t length;
+	size_t offset = peek ? CONVERT_HDR_LEN : 0;
+	struct convert_opts *opts;
 
-    ret = recvfrom(fd, hdr, CONVERT_HDR_LEN, MSG_WAITALL | flag, NULL, NULL);
+	ret = recvfrom(fd, hdr, CONVERT_HDR_LEN, MSG_WAITALL | flag, NULL, NULL);
 
-    if (ret < 0)
-    {
-        *error_code = errno;
+	if (ret < 0)
+	{
+		*error_code = errno;
 		sprintf(error_message, "unable to read the convert header");
 		return NULL;
-    }
+	}
 
-    if (convert_parse_header(hdr, ret, &length) < 0)
-    {
-        *error_code = errno;
+	if (convert_parse_header(hdr, ret, &length) < 0)
+	{
+		*error_code = errno;
 		sprintf(error_message, "unable to parse the convert header");
 		return NULL;
-    }
+	}
 
-    if (length)
-    {
-        uint8_t buffer[length + offset];
+	if (length)
+	{
+		uint8_t buffer[length + offset];
 
-        /* if peek the data was not yet read, so we need to
-         * also read (again the main header). */
-        if (peek)
-            length += CONVERT_HDR_LEN;
+		/* if peek the data was not yet read, so we need to
+		 * also read (again the main header). */
+		if (peek)
+			length += CONVERT_HDR_LEN;
 
-        ret = recvfrom(fd, buffer, length, MSG_WAITALL, NULL, NULL);
-        if (ret != (int)length || ret < 0)
-        {
-            *error_code = errno;
+		ret = recvfrom(fd, buffer, length, MSG_WAITALL, NULL, NULL);
+		if (ret != (int)length || ret < 0)
+		{
+			*error_code = errno;
 			sprintf(error_message, "unable to read the convert tlv data");
 			return NULL;
-        }
+		}
 
-        opts = convert_parse_tlvs(buffer + offset, length - offset);
-        if (opts == NULL){
+		opts = convert_parse_tlvs(buffer + offset, length - offset);
+		if (opts == NULL)
+		{
 			// if opts is NULL it may be because of en empty buffer
 			// TODO: check if this is the case
 			return NULL;
 		}
 
-        /* if we receive the TLV error we need to inform the app */
-        if (opts->flags & CONVERT_F_ERROR)
-        {
-            *error_code = (int)opts->error_code;
+		/* if we receive the TLV error we need to inform the app */
+		if (opts->flags & CONVERT_F_ERROR)
+		{
+			*error_code = (int)opts->error_code;
 			sprintf(error_message, "received error from the convert server: %d", opts->error_code);
-            convert_free_opts(opts);
-        }
+			convert_free_opts(opts);
+			return NULL;
+		}
+	}
+	*error_code = 0;
 
-		*error_code = 0;
-
-        return opts;
-    }
+	return opts;
 }
