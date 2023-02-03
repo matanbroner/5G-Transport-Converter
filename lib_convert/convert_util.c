@@ -379,14 +379,14 @@ struct convert_opts *read_convert_opts(int fd, bool peek, int* error_code, char*
 
     if (ret < 0)
     {
-        error_code = errno;
+        *error_code = errno;
 		sprintf(error_message, "unable to read the convert header");
 		return NULL;
     }
 
     if (convert_parse_header(hdr, ret, &length) < 0)
     {
-        error_code = errno;
+        *error_code = errno;
 		sprintf(error_message, "unable to parse the convert header");
 		return NULL;
     }
@@ -403,7 +403,7 @@ struct convert_opts *read_convert_opts(int fd, bool peek, int* error_code, char*
         ret = recvfrom(fd, buffer, length, MSG_WAITALL, NULL, NULL);
         if (ret != (int)length || ret < 0)
         {
-            error_code = errno;
+            *error_code = errno;
 			sprintf(error_message, "unable to read the convert tlv data");
 			return NULL;
         }
@@ -418,12 +418,12 @@ struct convert_opts *read_convert_opts(int fd, bool peek, int* error_code, char*
         /* if we receive the TLV error we need to inform the app */
         if (opts->flags & CONVERT_F_ERROR)
         {
-            error_code = opts->error_code;
+            *error_code = (int)opts->error_code;
 			sprintf(error_message, "received error from the convert server: %d", opts->error_code);
             convert_free_opts(opts);
         }
 
-		error_code = 0;
+		*error_code = 0;
 
         return opts;
     }
