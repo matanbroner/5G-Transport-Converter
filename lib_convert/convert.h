@@ -37,6 +37,7 @@
 #include <stdint.h>
 #include <netinet/in.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <errno.h>
 
 #define CONVERT_VERSION 1
