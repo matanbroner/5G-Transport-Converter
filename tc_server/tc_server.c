@@ -77,6 +77,17 @@ void read_convert(int sockfd, bool peek)
             printf("received TLV error: %u\n", opts->error_code);
             convert_free_opts(opts);
         }
+
+        // Check if CONNECT
+        if (opts->flags & CONVERT_F_CONNECT)
+        {
+            char addr[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, &opts->remote_addr.sin6_addr, addr, INET6_ADDRSTRLEN);
+
+            printf("Received CONNECT\n");
+            // Print the actual destination IP and port (struct sockaddr_in6 remote_addr in opts)
+            printf("Remote IP: %s, Port: %d\n", addr, ntohs(opts->remote_addr.sin6_port));
+        }
     }
 
 error:
