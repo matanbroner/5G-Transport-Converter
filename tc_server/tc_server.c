@@ -122,6 +122,7 @@ int main()
 
         // Parse the Convert headers
         char *convert_hdr = tcp->data;
+        printf("Received Convert header: %s\n", convert_hdr);
         parse_convert(convert_hdr);
     }
     return 0;
