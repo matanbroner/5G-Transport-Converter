@@ -21,25 +21,55 @@
 #define CONVERT_HDR_LEN sizeof(struct convert_header)
 #define MAX_PACKET_SIZE 1500
 
-void parse_convert(char *buffer)
+void read_convert(int sockfd, bool peek)
 {
     uint8_t hdr[CONVERT_HDR_LEN];
+    int ret;
+    int flag = peek ? MSG_PEEK : 0;
+    size_t length;
+    size_t offset = peek ? CONVERT_HDR_LEN : 0;
     struct convert_opts *opts;
-    int length;
 
-    printf(sizeof(*hdr) == CONVERT_HDR_LEN);
+    printf("peek fd %d to see whether data is in the receive "
+           "queue\n",
+           sockfd);
 
-    if (convert_parse_header(hdr, CONVERT_HDR_LEN, &length) < 0)
+    ret = recvfrom(sockfd, hdr, CONVERT_HDR_LEN, MSG_WAITALL | flag, NULL, NULL);
+
+    printf("peek returned %d\n", ret);
+    if (ret < 0)
     {
-        printf("unable to read the convert header\n");
         return;
+    }
+
+    if (convert_parse_header(hdr, ret, &length) < 0)
+    {
+        printf("[%d] unable to read the convert header\n",
+               sockfd);
+        goto error;
     }
 
     if (length)
     {
-        opts = convert_parse_tlvs(buffer + CONVERT_HDR_LEN, length - CONVERT_HDR_LEN);
+        uint8_t buffer[length + offset];
+
+        /* if peek the data was not yet read, so we need to
+         * also read (again the main header). */
+        if (peek)
+            length += CONVERT_HDR_LEN;
+
+        ret = recvfrom(sockfd, buffer, length, MSG_WAITALL, NULL, NULL);
+        if (ret != (int)length || ret < 0)
+        {
+            printf("[%d] unable to read the convert"
+                   " tlvs\n",
+                   sockfd);
+            goto error;
+        }
+
+        opts = convert_parse_tlvs(buffer + offset, length - offset);
         if (opts == NULL)
-            return;
+            goto error;
 
         /* if we receive the TLV error we need to inform the app */
         if (opts->flags & CONVERT_F_ERROR)
@@ -47,34 +77,19 @@ void parse_convert(char *buffer)
             printf("received TLV error: %u\n", opts->error_code);
             convert_free_opts(opts);
         }
-
-        if(opts->flags & CONVERT_F_CONNECT){
-            char str[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET, &(opts->remote_addr), str, INET6_ADDRSTRLEN);
-            printf("Received TLV connect\n");
-            printf(" -> remote_addr: %s\n", str);
-        }
-
-        // print the options
-        for (int i = 0; i < sizeof(opts) / sizeof(opts[0]); i++)
-        {
-            if(opts[i].flags | CONVERT_F_CONNECT)
-            {
-                char str[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET, &(opts[i].remote_addr), str, INET6_ADDRSTRLEN);
-
-                printf("Received TLV connect\n");
-                printf(" -> remote_addr: %s\n", str);
-            }
-        }
     }
+
+error:
+    /* ensure that a RST will be sent to the converter. */
+    struct linger linger = {1, 0};
+    setsockopt(sockfd, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger));
 }
 
 int main()
 {
     // Open a server socket and listen for connections
     // Server is an MPTCP socket
-    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+    int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_MPTCP);
     if (sockfd < 0)
     {
         perror("socket() error: ");
@@ -91,39 +106,27 @@ int main()
         return 1;
     }
 
+    // Accept a connection
+    if (listen(sockfd, 5) < 0)
+    {
+        perror("listen() error: ");
+        return 1;
+    }
+
     printf("Server listening on IP: %s, Port: %d\n", inet_ntoa(serv_addr.sin_addr), ntohs(serv_addr.sin_port));
 
     while (1)
     {
-        char buf[MAX_PACKET_SIZE];
-        struct sockaddr_in saddr;
-        socklen_t saddr_len = sizeof(saddr);
-        if (recvfrom(sockfd, buf, sizeof(buf), 0, (struct sockaddr *)&saddr, &saddr_len) < 0)
+        // Accept a connection
+        int connfd = accept(sockfd, (struct sockaddr *)NULL, NULL);
+        if (connfd < 0)
         {
-            perror("recvfrom() error: ");
-            continue;
+            perror("accept() error: ");
+            return 1;
         }
+        // Read the Convert headers and TLVs from the client (readr)
+        read_convert(connfd, false);
 
-        // Parse the TCP headers
-        struct tcp_packet *tcp = (struct tcp_packet *)buf;
-        struct tcp_header *tcp_hdr = &tcp->tcphdr;
-        struct ip_header *ip_hdr = &tcp->iphdr;
-
-        // filter packets to port 8081
-        if (ntohs(tcp_hdr->th_dport) != 8081)
-            continue;
-
-        // Log the packet
-        printf("Received packet from %s:%d to %s:%d\n",
-               inet_ntoa(ip_hdr->ip_src),
-               ntohs(tcp_hdr->th_sport),
-               inet_ntoa(ip_hdr->ip_dst),
-               ntohs(tcp_hdr->th_dport));
-
-        // Parse the Convert headers
-        char *convert_hdr = tcp->data;
-        printf("Received Convert header: %s\n", convert_hdr);
-        parse_convert(convert_hdr);
+        return 0;
     }
-    return 0;
 }
