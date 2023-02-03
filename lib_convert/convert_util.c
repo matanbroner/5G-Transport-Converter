@@ -42,15 +42,21 @@ convert_parse_header(const uint8_t *buff, size_t buff_len, size_t *tlvs_length)
 {
 	struct convert_header *hdr = (struct convert_header *)buff;
 
-	if (buff_len != sizeof(*hdr))
+	if (buff_len != sizeof(*hdr)){
+		printf("buff_len != sizeof(*hdr)\n");
 		return -1;
+	}
 
 	/* only support a single version */
-	if (hdr->version != CONVERT_VERSION)
+	if (hdr->version != CONVERT_VERSION){
+		printf("hdr->version != CONVERT_VERSION\n");
 		return -1;
+	}
 
-	if (ntohs(hdr->magic_no) != CONVERT_MAGIC_NO)
+	if (ntohs(hdr->magic_no) != CONVERT_MAGIC_NO){
+		printf("ntohs(hdr->magic_no) != CONVERT_MAGIC_NO\n");
 		return -1;
+	}
 
 	*tlvs_length = CONVERT_TO_BYTES(hdr->total_length) - sizeof(*hdr);
 	return 0;

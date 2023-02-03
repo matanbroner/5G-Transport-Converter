@@ -48,6 +48,13 @@ void parse_convert(char *buffer)
             convert_free_opts(opts);
         }
 
+        if(opts->flags & CONVERT_F_CONNECT){
+            char str[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET, &(opts->remote_addr), str, INET6_ADDRSTRLEN);
+            printf("Received TLV connect\n");
+            printf(" -> remote_addr: %s\n", str);
+        }
+
         // print the options
         for (int i = 0; i < sizeof(opts) / sizeof(opts[0]); i++)
         {
