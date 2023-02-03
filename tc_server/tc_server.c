@@ -27,6 +27,8 @@ void parse_convert(char *buffer)
     struct convert_opts *opts;
     int length;
 
+    printf(sizeof(*hdr) == CONVERT_HDR_LEN);
+
     if (convert_parse_header(hdr, CONVERT_HDR_LEN, &length) < 0)
     {
         printf("unable to read the convert header\n");
