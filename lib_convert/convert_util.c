@@ -49,12 +49,12 @@ convert_parse_header(const uint8_t *buff, size_t buff_len, size_t *tlvs_length)
 
 	/* only support a single version */
 	if (hdr->version != CONVERT_VERSION){
-		printf("hdr->version != CONVERT_VERSION\n");
+		printf("hdr->version = %d != CONVERT_VERSION\n", hdr->version);
 		return -1;
 	}
 
 	if (ntohs(hdr->magic_no) != CONVERT_MAGIC_NO){
-		printf("ntohs(hdr->magic_no) != CONVERT_MAGIC_NO\n");
+		printf("ntohs(hdr->magic_no) = %d != CONVERT_MAGIC_NO\n", ntohs(hdr->magic_no));
 		return -1;
 	}
 
