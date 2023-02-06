@@ -40,6 +40,27 @@ static unsigned int _socket_hash(int fd)
     return (unsigned int)fd % NUM_BUCKETS;
 }
 
+// Find socket state in hash table
+static socket_state_t *_socket_find(int fd, bool is_client)
+{
+    unsigned int bucket = _socket_hash(fd);
+    socket_state_t *state;
+    pthread_mutex_lock(&_socket_htable_mutex);
+    LIST_FOREACH(state, &_socket_htable[bucket], list)
+    {
+        if (state->c_fd == fd && is_client)
+        {
+            break;
+        }
+        else if (state->s_fd == fd && !is_client)
+        {
+            break;
+        }
+    }
+    pthread_mutex_unlock(&_socket_htable_mutex);
+    return state;
+}
+
 // Add socket state to hash table
 static void _socket_add(socket_state_t *state)
 {
@@ -61,45 +82,18 @@ static void _socket_add(socket_state_t *state)
 }
 
 // Remove socket state from hash table
-static void _socket_remove(socket_state_t *state)
+static void _socket_remove(int fd, bool is_client)
 {
-    // We remove from the table twice, once for the client and once for the server
-    // This is because we need to be able to find the state for both the client
-    // and server sockets depending on which direction the data is flowing
-
-    // Client socket
-    unsigned int bucket = _socket_hash(state->c_fd);
-    pthread_mutex_lock(&_socket_htable_mutex);
-    LIST_REMOVE(state, list);
-    pthread_mutex_unlock(&_socket_htable_mutex);
-
-    // Server socket
-    bucket = _socket_hash(state->s_fd);
-    pthread_mutex_lock(&_socket_htable_mutex);
-    LIST_REMOVE(state, list);
-    pthread_mutex_unlock(&_socket_htable_mutex);
-}
-
-// Find socket state in hash table
-static socket_state_t *_socket_find(int fd, bool is_client)
-{
-    unsigned int bucket = _socket_hash(fd);
-    socket_state_t *state;
-    pthread_mutex_lock(&_socket_htable_mutex);
-    LIST_FOREACH(state, &_socket_htable[bucket], list)
+    socket_state_t *state = _socket_find(fd, is_client);
+    if (state)
     {
-        if (state->c_fd == fd && is_client)
-        {
-            break;
-        }
-        else if (state->s_fd == fd && !is_client)
-        {
-            break;
-        }
+        pthread_mutex_lock(&_socket_htable_mutex);
+        LIST_REMOVE(state, list);
+        pthread_mutex_unlock(&_socket_htable_mutex);
+        free(state);
     }
-    pthread_mutex_unlock(&_socket_htable_mutex);
-    return state;
 }
+
 
 // Handle CONNECT_TLVs
 static int _handle_connect_tlv(int fd, struct convert_opts *opts)
@@ -132,8 +126,8 @@ static int _handle_connect_tlv(int fd, struct convert_opts *opts)
     return 0;
 }
 
-// Connect Function
-int connect()
+// Start Function
+int start()
 {
     // Open a server socket and listen for connections
     // Server is an MPTCP socket
@@ -214,6 +208,6 @@ int connect()
 
 int main()
 {
-    connect();
+    start();
     return 0;
 }
