@@ -99,12 +99,6 @@ static void _socket_remove(int fd, bool is_client)
 static int _handle_connect_tlv(int fd, struct convert_opts *opts)
 {
     struct sockaddr_in6* remote_addr = &opts->remote_addr;
-    // Check that the remote address is valid
-    if (remote_addr->sin6_family != AF_INET6)
-    {
-        fprintf(stderr, "Invalid remote address\n");
-        return 1;
-    }
     // Create a socket to connect to the remote server
     int s_fd = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
     if (s_fd < 0)
