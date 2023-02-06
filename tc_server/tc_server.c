@@ -127,7 +127,7 @@ static int _handle_connect_tlv(int fd, struct convert_opts *opts)
 }
 
 // Start Function
-int start()
+int start(int port)
 {
     // Open a server socket and listen for connections
     // Server is an MPTCP socket
@@ -140,7 +140,7 @@ int start()
 
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(8081);
+    serv_addr.sin_port = htons(port);
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
@@ -206,8 +206,9 @@ int start()
     return 0;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    start();
+    int port = atoi(argv[1]);
+    start(port);
     return 0;
 }
