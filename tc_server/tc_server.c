@@ -171,7 +171,11 @@ int start(int port)
         uint8_t buf[1024];
         struct convert_opts nil_opts = {0};
         convert_write(buf, sizeof(buf), &nil_opts);
-        sendto(connfd, buf, sizeof(buf), MSG_FASTOPEN, NULL, 0);
+        if(sendto(connfd, buf, sizeof(buf), MSG_FASTOPEN, NULL, 0) < 0)
+        {
+            perror("sendto() error: ");
+            return 1;
+        }
 
         // Read the Convert headers and TLVs from the client (readr)
         int err_code = 0;
