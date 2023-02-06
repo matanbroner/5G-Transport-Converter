@@ -169,7 +169,8 @@ int start(int port)
         }
         // Use TCP Fast Open to send Convert headers to the client
         uint8_t buf[1024];
-        convert_write(buf, sizeof(buf), NULL);
+        struct convert_opts opts = {0};
+        convert_write(buf, sizeof(buf), &opts);
         sendto(connfd, buf, sizeof(buf), MSG_FASTOPEN, NULL, 0);
 
         // Read the Convert headers and TLVs from the client (readr)
