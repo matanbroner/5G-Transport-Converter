@@ -171,7 +171,7 @@ int start(int port)
         uint8_t buf[1024];
         struct convert_opts nil_opts = {0};
         convert_write(buf, sizeof(buf), &nil_opts);
-        if(sendto(connfd, buf, sizeof(buf), MSG_FASTOPEN, NULL, 0) < 0)
+        if(send(connfd, buf, sizeof(buf), MSG_FASTOPEN) < 0)
         {
             perror("sendto() error: ");
             return 1;
