@@ -29,6 +29,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+//  CONVERT_LOG=/tmp/converter.log CONVERT_ADDR=127.0.0.1 CONVERT_PORT=1234 
+
 #define _GNU_SOURCE
 #include <arpa/inet.h>
 #include <errno.h>

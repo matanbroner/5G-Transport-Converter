@@ -28,6 +28,12 @@ typedef struct socket_state
     int s_fd; /* Server socket */
 } socket_state_t;
 
+typedef struct thread_args
+{
+    int fd;
+    bool is_client;
+} thread_args_t;
+
 // Hash table for socket state
 #define NUM_BUCKETS 1024
 static LIST_HEAD(socket_htbl_t, socket_state) _socket_htable[NUM_BUCKETS];
@@ -60,6 +66,50 @@ static socket_state_t *_socket_find(int fd, bool is_client)
     pthread_mutex_unlock(&_socket_htable_mutex);
     return state;
 }
+
+// Proxy data from one socket to another
+// Keep proxying while both sockets are open
+static int _proxy_data(void* args)
+{
+    thread_args_t *thread_args = (thread_args_t *)args;
+    int fd = thread_args->fd;
+    bool is_client = thread_args->is_client;
+
+    printf("Starting proxy thread for fd %d (is_client=%d)\n", fd, is_client);
+
+    while (1)
+    {
+        // Find the socket state for this socket
+        socket_state_t *state = _socket_find(fd, is_client);
+        if (!state)
+        {
+            return 1;
+        }
+        // Determine which socket to read from and which to write to
+        int read_fd = is_client ? state->c_fd : state->s_fd;
+        int write_fd = is_client ? state->s_fd : state->c_fd;
+        // Read data from the socket
+        char buf[4096];
+        int n = read(read_fd, buf, sizeof(buf));
+        if (n < 0)
+        {
+            perror("read() error: ");
+            return 1;
+        }
+        else if (n == 0)
+        {
+            // Socket closed
+            return 0;
+        }
+        // Write data to the socket
+        if (write(write_fd, buf, n) < 0)
+        {
+            perror("write() error: ");
+            return 1;
+        }
+    }
+}
+
 
 // Add socket state to hash table
 static void _socket_add(socket_state_t *state)
@@ -94,11 +144,10 @@ static void _socket_remove(int fd, bool is_client)
     }
 }
 
-
 // Handle CONNECT_TLVs
 static int _handle_connect_tlv(int fd, struct convert_opts *opts)
 {
-    struct sockaddr_in6* remote_addr = &opts->remote_addr;
+    struct sockaddr_in6 *remote_addr = &opts->remote_addr;
     // Create a socket to connect to the remote server
     int s_fd = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
     if (s_fd < 0)
@@ -117,6 +166,17 @@ static int _handle_connect_tlv(int fd, struct convert_opts *opts)
     state->s_fd = s_fd;
     // Add the socket state to the hash table
     _socket_add(state);
+    // Start two threads to proxy data in both directions
+    thread_args_t c_args = {fd, true};
+    thread_args_t s_args = {s_fd, false};
+    pthread_t c_thread, s_thread;
+    pthread_create(&c_thread, NULL, (void *)_proxy_data, (void *)&c_args);
+    pthread_create(&s_thread, NULL, (void *)_proxy_data, (void *)&s_args);
+    // Wait for the threads to finish
+    pthread_join(c_thread, NULL);
+    pthread_join(s_thread, NULL);
+    // Remove the socket state from the hash table
+    _socket_remove(fd, true);
     return 0;
 }
 
@@ -164,8 +224,8 @@ int start(int port)
         // Use TCP Fast Open to send Convert headers to the client
         uint8_t buf[1024];
         struct convert_opts nil_opts = {0};
-        convert_write(buf, sizeof(buf), &nil_opts);
-        if(send(connfd, buf, sizeof(buf), 0) < 0)
+        int length = convert_write(buf, sizeof(buf), &nil_opts);
+        if (send(connfd, buf, length, 0) < 0)
         {
             perror("send() error: ");
             return 1;
@@ -196,11 +256,11 @@ int start(int port)
                         printf("Error: Failed to handle CONNECT_TLV\n");
                         // Close the client socket
                         close(connfd);
-                    }   
+                    }
+                    write(connfd, "HTTP/1.1 200 OK\r", 16);
                 }
             }
         }
-
     }
     return 0;
 }

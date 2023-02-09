@@ -17,6 +17,8 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+#define SEND_SIZE 10000
+
 int main(int argc, char **argv)
 {
     int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_MPTCP);
@@ -29,9 +31,14 @@ int main(int argc, char **argv)
     while (1)
     {
         int newsockfd = accept(sockfd, NULL, NULL);
-        char *buffer = malloc(1000);
-        memset(buffer, 'a', 1000);
-        send(newsockfd, buffer, 1000, 0);
+        // print incoming connection ip address and port
+        struct sockaddr_in addr;
+        socklen_t addr_size = sizeof(struct sockaddr_in);
+        getpeername(newsockfd, (struct sockaddr *)&addr, &addr_size);
+        printf("Incoming connection from %s:%d\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+        char *buffer = malloc(SEND_SIZE);
+        memset(buffer, 'a', SEND_SIZE);
+        send(newsockfd, buffer, SEND_SIZE, 0);
         close(newsockfd);
     }
     close(sockfd);
