@@ -391,6 +391,8 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 	}
 
 	printf("the redirection of fd %d failed with error: %d\n", sockfd, result);
+	printf("errno: %d\n", errno);
+	printf("error: %s\n", strerror(errno));
 
 	/* If the redirection failed during the connect() there are no benefit to
 	 * keep the allocated state. Clear it and behave like we never handled

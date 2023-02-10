@@ -28,9 +28,11 @@ int main(int argc, char **argv)
     // Read from the socket while data is available
     char buffer[1024];
     int n;
+    int total = 0;
     while ((n = read(sockfd, buffer, sizeof(buffer))) > 0) {
-        printf("Received %d bytes: %s\n", n, buffer);
+        total += n;
     }
+    printf("Read %d bytes from socket\n", total);
     printf("Closing socket...\n");
     close(sockfd);
     return 0;
