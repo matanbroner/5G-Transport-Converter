@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 
-#define SEND_SIZE 10000
+#define SEND_SIZE 1000000
 
 int main(int argc, char **argv)
 {

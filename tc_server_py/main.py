@@ -69,11 +69,6 @@ class TCServer:
                     logger.info("Accepted connection from {} with fd={}".format(addr, client_sock.fileno()))
                     print("\t--> ", client_sock)
 
-                    # try:
-                    #     print(get_subflow_tcp_info(self.sock.fileno()))
-                    # except Exception as e:
-                    #     logger.error(e)
-
                     self.handle_connection(client_sock)
                 else:
                     # Read from the socket
@@ -138,6 +133,13 @@ class TCServer:
         remove them from the input list and forward map. 
         """
         cfd, sfd = sock, self.forward_map[sock.fileno()]
+        try:
+            subflow_tcp_info = get_subflow_tcp_info(sfd.fileno())
+            for subflow in subflow_tcp_info:
+                if subflow:
+                    logger.info("Subflow {}: {}".format(subflow["id"], subflow["tcpi_rtt"]))
+        except Exception as e:
+            logger.error(e)
         if sfd.fileno() == -1 or cfd.fileno() == -1:
             # Close both sockets
             logger.info("Socket pair is closed, closing sockets")

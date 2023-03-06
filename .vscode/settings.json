@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "convert_util.h": "c",
+        "mptcp.h": "c"
+    }
+}

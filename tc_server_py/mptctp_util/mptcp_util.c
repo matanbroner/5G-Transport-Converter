@@ -40,6 +40,7 @@ static PyObject *mptcp_util_get_subflow_info(PyObject *self, PyObject *args)
     int num_subflows = (int)(subflow_info.d.num_subflows);
     PyObject *subflow_list = PyList_New(num_subflows);
     // Iterate through each subflow and add it to the list
+    printf("Num subflows: %d\n", num_subflows);
     for (int i = 0; i < num_subflows; i++)
     {
         PyObject *subflow_dict = PyDict_New();
@@ -73,8 +74,8 @@ static PyObject *mptcp_util_get_subflow_info(PyObject *self, PyObject *args)
         }
         else
         {
-            PyErr_SetString(PyExc_RuntimeError, "Unknown address family");
-            return NULL;
+            printf("Unknown address family: %d, skipping\n", local->sa_family);
+            continue;
         }
         // Populate the dictionary with the addresses
         PyDict_SetItemString(subflow_dict, "local_addr", PyUnicode_FromString(local_ip));
