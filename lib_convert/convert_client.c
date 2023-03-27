@@ -332,6 +332,7 @@ _read_convert(socket_state_t *state, bool peek, int fail_errno)
 	if (!peek)
 		_free_state(state);
 
+	printf("return run\n");
 	return SYSCALL_RUN;
 
 error_and_free:
@@ -347,6 +348,7 @@ error:
 		_free_state(state);
 
 skip:
+	printf("skip the syscall\n");
 	return SYSCALL_SKIP;
 }
 
@@ -385,7 +387,7 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 		 * check
 		 * the answer from the converter. */
 		if (result > 0)
-			_read_convert(state, false, ECONNREFUSED);
+			return _read_convert(state, false, ECONNREFUSED);
 
 		return -ECONNREFUSED;
 	}
