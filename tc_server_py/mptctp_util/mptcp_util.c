@@ -122,7 +122,8 @@ PyObject * mptcp_util_get_subflow_tcp_info(PyObject *self, PyObject *args)
     }
     // Create a list to hold all subflows as individual dictionaries
     int num_subflows = (int)(addrs.d.num_subflows);
-    PyObject *subflow_list = PyList_New(num_subflows);
+    printf("Num subflows: %d\n", num_subflows);
+    PyObject *subflow_list = PyList_New(0);
     // Iterate through each subflow and add it to the list
     for (int i = 0; i < num_subflows; i++)
     {
@@ -165,6 +166,7 @@ PyObject * mptcp_util_get_subflow_tcp_info(PyObject *self, PyObject *args)
         PyDict_SetItemString(subflow_dict, "tcpi_rcv_rtt", PyLong_FromLong(ti->tcpi_rcv_rtt));
         PyDict_SetItemString(subflow_dict, "tcpi_rcv_space", PyLong_FromLong(ti->tcpi_rcv_space));
         PyDict_SetItemString(subflow_dict, "tcpi_total_retrans", PyLong_FromLong(ti->tcpi_total_retrans));
+
 
         // Add the subflow dictionary to the list
         PyList_Append(subflow_list, subflow_dict);

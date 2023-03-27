@@ -134,17 +134,23 @@ class TCServer:
         """
         cfd, sfd = sock, self.forward_map[sock.fileno()]
         try:
-            subflow_tcp_info = get_subflow_tcp_info(sfd.fileno())
+            subflow_tcp_info = get_subflow_tcp_info(cfd.fileno())
             for subflow in subflow_tcp_info:
-                if subflow:
+                if isinstance(subflow, dict):
                     logger.info("Subflow {}: {}".format(subflow["id"], subflow["tcpi_rtt"]))
+                continue
         except Exception as e:
             logger.error(e)
         if sfd.fileno() == -1 or cfd.fileno() == -1:
             # Close both sockets
             logger.info("Socket pair is closed, closing sockets")
             self.cleanup_socket_pair(cfd, sfd)
-        data = sock.recv(BUFFER_SIZE)
+        try:
+            data = sock.recv(BUFFER_SIZE)
+        except Exception as e:
+            logger.error(e)
+            self.cleanup_socket_pair(cfd, sfd)
+            return
         if data:
             # Forward data to the other socket
             self.forward_map[sock.fileno()].send(data)
