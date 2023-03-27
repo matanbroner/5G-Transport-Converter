@@ -236,9 +236,20 @@ _redirect(socket_state_t *state, struct sockaddr *dest)
 	if (len < 0)
 		return len;
 
-	// use TCP fast open to send the convert header in the SYN packet
-	return sendto(state->fd, buf, len, MSG_FASTOPEN, _converter_addr->ai_addr,
-				  _converter_addr->ai_addrlen);
+	// // use TCP fast open to send the convert header in the SYN packet
+	// return sendto(state->fd, buf, len, MSG_FASTOPEN, _converter_addr->ai_addr,
+	// 			  _converter_addr->ai_addrlen);
+
+	// Fast Open interferes with creating subflows
+	int (*lconnect)(int, const struct sockaddr *, socklen_t) = dlsym(RTLD_NEXT, "connect");
+	if (lconnect(state->fd, _converter_addr->ai_addr, _converter_addr->ai_addrlen) < 0)
+	{
+		printf("connect to converter failed: %s\n", strerror(errno));
+		return -1;
+	}
+	// send the convert header
+	int (*lsend)(int, const void *, size_t, int) = dlsym(RTLD_NEXT, "send");
+	return lsend(state->fd, buf, len, 0);
 }
 
 int socket(int domain, int type, int protocol)
@@ -356,7 +367,7 @@ error:
 		_free_state(state);
 
 skip:
-	printf("return skip\n");
+	printf("skip the syscall\n");
 	return SYSCALL_SKIP;
 }
 
@@ -395,7 +406,7 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 		 * check
 		 * the answer from the converter. */
 		if (result > 0)
-			_read_convert(state, false, ECONNREFUSED);
+			return _read_convert(state, false, ECONNREFUSED);
 
 		return -ECONNREFUSED;
 	}
