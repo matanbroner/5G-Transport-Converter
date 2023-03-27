@@ -284,6 +284,8 @@ _read_convert(socket_state_t *state, bool peek, int fail_errno)
 	printf("peek returned %d\n", ret);
 	if (ret < 0)
 	{
+		printf("[%d] unable to peek the convert header\n",
+			   state->fd);
 		/* In case of error we want to skip the actual call.
 		 * Moreover, if return EAGAIN (non-blocking) we don't
 		 * want to app to receive the buffer.
@@ -300,6 +302,8 @@ _read_convert(socket_state_t *state, bool peek, int fail_errno)
 
 	if (length)
 	{
+		printf("convert header indicates %zu bytes of data\n",
+			   length);
 		uint8_t buffer[length + offset];
 
 		/* if peek the data was not yet read, so we need to
@@ -317,8 +321,11 @@ _read_convert(socket_state_t *state, bool peek, int fail_errno)
 		}
 
 		opts = convert_parse_tlvs(buffer + offset, length - offset);
-		if (opts == NULL)
+		if (opts == NULL) {
+			printf("[%d] unable to parse the convert tlvs\n",
+				   state->fd);
 			goto error;
+		}
 
 		/* if we receive the TLV error we need to inform the app */
 		if (opts->flags & CONVERT_F_ERROR)
@@ -332,9 +339,11 @@ _read_convert(socket_state_t *state, bool peek, int fail_errno)
 	if (!peek)
 		_free_state(state);
 
+	printf("return run\n");
 	return SYSCALL_RUN;
 
 error_and_free:
+	printf("return error and free\n");
 	convert_free_opts(opts);
 
 error:
@@ -347,6 +356,7 @@ error:
 		_free_state(state);
 
 skip:
+	printf("return skip\n");
 	return SYSCALL_SKIP;
 }
 

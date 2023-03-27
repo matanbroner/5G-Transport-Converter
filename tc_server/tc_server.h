@@ -1,25 +1,36 @@
 #ifndef _TC_SERVER_H_
 #define _TC_SERVER_H_
 
+#define __USE_MISC
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <linux/ip.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <ogs-core.h>
+
 ogs_hash_t *proxy_hash;
 ogs_hash_t *conn_hash;
 
 // Proxy structure
 typedef struct proxy_s {
     int fd;
-    ip_t from_ip;
-    ip_t to_ip;
+    unsigned int from_ip;
+    unsigned int to_ip;
     uint16_t from_port;
     uint16_t to_port;
 } proxy_t;
 
 // Utility methods
-char *gen_proxy_key(ip_t from_ip, uint16_t from_port, ip_t to_ip, uint16_t to_port) {
-    char* key = malloc(64 * sizeof(char));
-    char* from_ip_str = inet_ntop(AF_INET, &proxy->from_ip, NULL, 0);
-    char* to_ip_str = inet_ntop(AF_INET, &proxy->to_ip, NULL, 0);
-    sprintf(key, "%s:%d,%s:%d", from_ip_str, proxy->from_port, to_ip_str, proxy->to_port);
-}
+char *gen_proxy_key(unsigned int from_ip, uint16_t from_port, unsigned int to_ip, uint16_t to_port);
+proxy_t *get_new_proxy_obj();
 
 // Infrastructure methods
 int init_tc_server(void);
