@@ -105,7 +105,7 @@ PyObject * mptcp_util_get_subflow_tcp_info(PyObject *self, PyObject *args)
     memset(&addrs, 0, sizeof(addrs));
 
     addrs.d.size_subflow_data = sizeof(struct mptcp_subflow_data);
-    addrs.d.size_user = sizeof(struct mptcp_subflow_addrs);
+    addrs.d.size_user = sizeof(struct tcp_info);
 
     socklen_t len = sizeof(addrs);
     // Get sock opt for subflow tcp info
