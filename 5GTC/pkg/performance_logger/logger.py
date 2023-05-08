@@ -1,9 +1,9 @@
 import logging
 import time
 import threading
-from performance_logger.db import DB
-from performance_logger.webui import WebUI
-from performance_logger.util import random_iteration_id_string
+from pkg.performance_logger.db import DB
+from pkg.performance_logger.webui import WebUI
+from pkg.performance_logger.util import random_iteration_id_string
 from mptcp_util import *
 
 logger = logging.getLogger("performance_logger")

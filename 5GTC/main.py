@@ -14,10 +14,8 @@ import logging
 import yaml
 import os
 
-from performance_logger import PerformanceLogger, WebUI
-from convert import *
-from mptcp_util import *
-
+from pkg import PerformanceLogger, WebUI
+from pkg.convert import *
 
 DEFAULT_BUFFER_SIZE = 4096
 

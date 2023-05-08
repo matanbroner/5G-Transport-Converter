@@ -8,8 +8,8 @@ from io import BytesIO
 from flask import Flask, render_template, Response
 
 # Local imports
-from performance_logger.db import DB
-from performance_logger.plot import plot_subflow_features, plot_transfer
+from pkg.performance_logger.db import DB
+from pkg.performance_logger.plot import plot_subflow_features, plot_transfer
 
 logger = logging.getLogger("webui")
 logger.setLevel(logging.DEBUG)
