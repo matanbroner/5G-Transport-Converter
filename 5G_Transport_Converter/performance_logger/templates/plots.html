@@ -1,0 +1,70 @@
+<html>  
+    <head>
+        <title>Performance Logger</title>
+        <!-- Bulma CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    </head>
+
+    <body style="overflow-anchor: none;">
+        <div id="error"></div>
+        <div class="container">
+            Loading plots...
+        </div>
+    </body>
+
+    <!-- Script -->
+    <script>
+        // Get last item after /
+        const iterationId = window.location.href.split('/').pop();
+        let _request_live = false;
+        // Set an interval to fetch new plots every second
+        let interval = setInterval(function() {
+            if (_request_live) {
+                return;
+            }
+            _request_live = true;
+            // Fetch the plots
+            fetch(`/api/plots/${iterationId}`)
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    // Get the container
+                    var container = document.querySelector('.container');
+
+                    // Clear the container
+                    container.innerHTML = ""
+                    container.style.display = "flex";
+
+                    data.plots.forEach(entry => {
+                        container.innerHTML += `
+                        <div>
+                            ${entry.data}
+                        </div>
+                        `
+                    });
+                })
+                .catch(function(error) {
+                    // Get the error container
+                    var error_container = document.querySelector('#error');
+
+                    // Clear the error container
+                    error_container.innerHTML = '';
+
+                    // Create the error message
+                    var error_message = document.createElement('div');
+                    error_message.className = 'notification is-danger';
+                    error_message.innerHTML = 'Error: ' + error;
+
+                    // Append the error message to the container
+                    error_container.appendChild(error_message);
+
+                    // Clear the interval
+                    clearInterval(interval);
+                })
+                .finally(function() {
+                    _request_live = false;
+                });
+        }, 1000);
+    </script>
+</html>

@@ -5,6 +5,53 @@
 #include <linux/tcp.h>
 #include <arpa/inet.h>
 
+// Get MPTCP connection information for a given socket file descriptor
+static PyObject *mptcp_util_get_mptcp_info(PyObject *self, PyObject *args)
+{
+    int sockfd;
+    if (!PyArg_ParseTuple(args, "i", &sockfd))
+        return NULL;
+
+    struct mptcp_info mptcp_info;
+    memset(&mptcp_info, 0, sizeof(mptcp_info));
+
+    socklen_t len = sizeof(mptcp_info);
+    // Get sock opt for mptcp info
+    int ret = getsockopt(sockfd, SOL_MPTCP, MPTCP_INFO, &mptcp_info, &len);
+    if (ret < 0)
+    {
+        int err = errno;
+        char *err_msg = strerror(err);
+        char *err_msg_full = malloc(strlen(err_msg) + 100);
+        sprintf(err_msg_full, "Error getting mptcp info: [%d] %s", err, err_msg);
+        PyErr_SetString(PyExc_RuntimeError, err_msg_full);
+        free(err_msg_full);
+        return NULL;
+    }
+
+    // Create a dictionary to hold the mptcp info
+    PyObject *mptcp_dict = PyDict_New();
+    
+    // Populate the dictionary with the mptcp info
+    PyDict_SetItemString(mptcp_dict, "mptcpi_subflows", PyLong_FromLong(mptcp_info.mptcpi_subflows));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_add_addr_signal", PyLong_FromLong(mptcp_info.mptcpi_add_addr_signal));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_add_addr_accepted", PyLong_FromLong(mptcp_info.mptcpi_add_addr_accepted));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_subflows_max", PyLong_FromLong(mptcp_info.mptcpi_subflows_max));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_add_addr_signal_max", PyLong_FromLong(mptcp_info.mptcpi_add_addr_signal_max));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_add_addr_accepted_max", PyLong_FromLong(mptcp_info.mptcpi_add_addr_accepted_max));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_flags", PyLong_FromLong(mptcp_info.mptcpi_flags));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_token", PyLong_FromLong(mptcp_info.mptcpi_token));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_write_seq", PyLong_FromLong(mptcp_info.mptcpi_write_seq));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_snd_una", PyLong_FromLong(mptcp_info.mptcpi_snd_una));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_rcv_nxt", PyLong_FromLong(mptcp_info.mptcpi_rcv_nxt));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_local_addr_used", PyLong_FromLong(mptcp_info.mptcpi_local_addr_used));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_local_addr_max", PyLong_FromLong(mptcp_info.mptcpi_local_addr_max));
+    PyDict_SetItemString(mptcp_dict, "mptcpi_csum_enabled", PyLong_FromLong(mptcp_info.mptcpi_csum_enabled));
+
+    // Return the dictionary of mptcp info
+    return mptcp_dict;
+}
+
 // Get subflow information for a given socket file descriptor
 static PyObject *mptcp_util_get_subflow_info(PyObject *self, PyObject *args)
 {
@@ -40,7 +87,6 @@ static PyObject *mptcp_util_get_subflow_info(PyObject *self, PyObject *args)
     int num_subflows = (int)(subflow_info.d.num_subflows);
     PyObject *subflow_list = PyList_New(num_subflows);
     // Iterate through each subflow and add it to the list
-    printf("Num subflows: %d\n", num_subflows);
     for (int i = 0; i < num_subflows; i++)
     {
         PyObject *subflow_dict = PyDict_New();
@@ -122,7 +168,6 @@ PyObject * mptcp_util_get_subflow_tcp_info(PyObject *self, PyObject *args)
     }
     // Create a list to hold all subflows as individual dictionaries
     int num_subflows = (int)(addrs.d.num_subflows);
-    printf("Num subflows: %d\n", num_subflows);
     PyObject *subflow_list = PyList_New(0);
     // Iterate through each subflow and add it to the list
     for (int i = 0; i < num_subflows; i++)
@@ -130,6 +175,7 @@ PyObject * mptcp_util_get_subflow_tcp_info(PyObject *self, PyObject *args)
         PyObject *subflow_dict = PyDict_New();
         // Add the subflow id (we make up this id, it's not a real attribute)
         PyDict_SetItemString(subflow_dict, "id", PyLong_FromLong(i));
+
 
         // Get the tcp info
         struct tcp_info *ti = &addrs.ti[i];
@@ -142,6 +188,8 @@ PyObject * mptcp_util_get_subflow_tcp_info(PyObject *self, PyObject *args)
         PyDict_SetItemString(subflow_dict, "tcpi_options", PyLong_FromLong(ti->tcpi_options));
         PyDict_SetItemString(subflow_dict, "tcpi_snd_wscale", PyLong_FromLong(ti->tcpi_snd_wscale));
         PyDict_SetItemString(subflow_dict, "tcpi_rcv_wscale", PyLong_FromLong(ti->tcpi_rcv_wscale));
+        PyDict_SetItemString(subflow_dict, "tcpi_delivery_rate_app_limited", PyLong_FromLong(ti->tcpi_delivery_rate_app_limited));
+        PyDict_SetItemString(subflow_dict, "tcpi_fastopen_client_fail", PyLong_FromLong(ti->tcpi_fastopen_client_fail));
         PyDict_SetItemString(subflow_dict, "tcpi_rto", PyLong_FromLong(ti->tcpi_rto));
         PyDict_SetItemString(subflow_dict, "tcpi_ato", PyLong_FromLong(ti->tcpi_ato));
         PyDict_SetItemString(subflow_dict, "tcpi_snd_mss", PyLong_FromLong(ti->tcpi_snd_mss));
@@ -166,6 +214,27 @@ PyObject * mptcp_util_get_subflow_tcp_info(PyObject *self, PyObject *args)
         PyDict_SetItemString(subflow_dict, "tcpi_rcv_rtt", PyLong_FromLong(ti->tcpi_rcv_rtt));
         PyDict_SetItemString(subflow_dict, "tcpi_rcv_space", PyLong_FromLong(ti->tcpi_rcv_space));
         PyDict_SetItemString(subflow_dict, "tcpi_total_retrans", PyLong_FromLong(ti->tcpi_total_retrans));
+        PyDict_SetItemString(subflow_dict, "tcpi_pacing_rate", PyLong_FromLong(ti->tcpi_pacing_rate));
+        PyDict_SetItemString(subflow_dict, "tcpi_max_pacing_rate", PyLong_FromLong(ti->tcpi_max_pacing_rate));
+        PyDict_SetItemString(subflow_dict, "tcpi_bytes_acked", PyLong_FromLong(ti->tcpi_bytes_acked));
+        PyDict_SetItemString(subflow_dict, "tcpi_bytes_received", PyLong_FromLong(ti->tcpi_bytes_received));
+        PyDict_SetItemString(subflow_dict, "tcpi_segs_out", PyLong_FromLong(ti->tcpi_segs_out));
+        PyDict_SetItemString(subflow_dict, "tcpi_segs_in", PyLong_FromLong(ti->tcpi_segs_in));
+        PyDict_SetItemString(subflow_dict, "tcpi_notsent_bytes", PyLong_FromLong(ti->tcpi_notsent_bytes));
+        PyDict_SetItemString(subflow_dict, "tcpi_min_rtt", PyLong_FromLong(ti->tcpi_min_rtt));
+        PyDict_SetItemString(subflow_dict, "tcpi_data_segs_in", PyLong_FromLong(ti->tcpi_data_segs_in));
+        PyDict_SetItemString(subflow_dict, "tcpi_data_segs_out", PyLong_FromLong(ti->tcpi_data_segs_out));
+        PyDict_SetItemString(subflow_dict, "tcpi_delivery_rate", PyLong_FromLong(ti->tcpi_delivery_rate));
+        PyDict_SetItemString(subflow_dict, "tcpi_busy_time", PyLong_FromLong(ti->tcpi_busy_time));
+        PyDict_SetItemString(subflow_dict, "tcpi_rwnd_limited", PyLong_FromLong(ti->tcpi_rwnd_limited));
+        PyDict_SetItemString(subflow_dict, "tcpi_sndbuf_limited", PyLong_FromLong(ti->tcpi_sndbuf_limited));
+        PyDict_SetItemString(subflow_dict, "tcpi_delivered", PyLong_FromLong(ti->tcpi_delivered));
+        PyDict_SetItemString(subflow_dict, "tcpi_delivered_ce", PyLong_FromLong(ti->tcpi_delivered_ce));
+        PyDict_SetItemString(subflow_dict, "tcpi_bytes_sent", PyLong_FromLong(ti->tcpi_bytes_sent));
+        PyDict_SetItemString(subflow_dict, "tcpi_bytes_retrans", PyLong_FromLong(ti->tcpi_bytes_retrans));
+        PyDict_SetItemString(subflow_dict, "tcpi_dsack_dups", PyLong_FromLong(ti->tcpi_dsack_dups));
+        PyDict_SetItemString(subflow_dict, "tcpi_reord_seen", PyLong_FromLong(ti->tcpi_reord_seen));
+        PyDict_SetItemString(subflow_dict, "tcpi_rcv_ooopack", PyLong_FromLong(ti->tcpi_rcv_ooopack));
 
 
         // Add the subflow dictionary to the list
@@ -177,6 +246,7 @@ PyObject * mptcp_util_get_subflow_tcp_info(PyObject *self, PyObject *args)
 
 // Module method table
 static PyMethodDef MptcpUtilMethods[] = {
+    {"get_mptcp_info", mptcp_util_get_mptcp_info, METH_VARARGS, "Get MPTCP information for a given socket file descriptor"},
     {"get_subflow_info", mptcp_util_get_subflow_info, METH_VARARGS, "Get subflow information for a given socket file descriptor"},
     {"get_subflow_tcp_info", mptcp_util_get_subflow_tcp_info, METH_VARARGS, "Get subflow TCP information for a given socket file descriptor"},
     {NULL, NULL, 0, NULL} /* Sentinel */

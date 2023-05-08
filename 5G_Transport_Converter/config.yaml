@@ -1,0 +1,12 @@
+network:
+  ip: 192.168.2.221
+  port: 8080
+webui:
+  host: 192.168.2.221
+  port: 5000
+log: INFO
+proxy:
+  read_buffer_size: 4096
+performance:
+  tcp_subflow_info_features: all
+  measurement_interval_ms: 500
