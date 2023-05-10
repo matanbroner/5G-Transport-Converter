@@ -211,9 +211,10 @@ class TCServer:
         if self.perf_loggers:
             [logger.stop for logger in self.perf_loggers.values()]
         self.webui.stop()
-        os.remove("performance_log.db")
-        if os.path.exists("performance_log.db-journal"):
-            os.remove("performance_log.db-journal")
+        if self.config["db"]["delete_on_exit"]:
+            os.remove("performance_log.db")
+            if os.path.exists("performance_log.db-journal"):
+                os.remove("performance_log.db-journal")
         self.sock.close()
 
         
