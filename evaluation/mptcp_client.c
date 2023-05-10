@@ -52,14 +52,14 @@ void* log_metrics(){
     while (LOOP) {
         sleep(REPORT_INTERVAL);
         char* msg = malloc(100);
-        if (CLIENT_TYPE == UPLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT) {
+        if (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT) {
             // zero out the buffer
             memset(msg, 0, 100);
             sprintf(msg, "Read %d bytes from server in last %d seconds", (int)(BYTES_READ - last_read), REPORT_INTERVAL);
             log_color(NORMAL, msg);
             last_read = BYTES_READ;
         }
-        if (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT) {
+        if (CLIENT_TYPE == UPLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT) {
             // zero out the buffer
             memset(msg, 0, 100);
             sprintf(msg, "Wrote %d bytes to server in last %d seconds", (int)(BYTES_WRITTEN - last_written), REPORT_INTERVAL);
