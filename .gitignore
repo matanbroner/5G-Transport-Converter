@@ -1,5 +1,7 @@
 test
 *.db
+*.journal
+figures/
 
 # Prerequisites
 *.d

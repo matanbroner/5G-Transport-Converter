@@ -13,6 +13,7 @@ import select
 import logging
 import yaml
 import os
+import signal
 
 from pkg import PerformanceLogger, WebUI
 from pkg.convert import *
@@ -41,6 +42,9 @@ class TCServer:
         if "proxy" in config:
             if "read_buffer_size" in config["proxy"]:
                 self.read_buffer_size = config["proxy"]["read_buffer_size"]
+
+        # Kill existing processes
+        self.kill_existing_process_on_port(config["network"]["port"])
 
         # IP address to listen on
         self.ip = config["network"]["ip"]
@@ -216,6 +220,28 @@ class TCServer:
             if os.path.exists("performance_log.db-journal"):
                 os.remove("performance_log.db-journal")
         self.sock.close()
+
+    def kill_existing_process_on_port(self, port):
+        """
+        Kill the process listening on the given port
+        """
+        # Get the PID of the process listening on the port
+        pids = []
+        try:
+            pid_str = subprocess.check_output(["lsof", "-t", "-i:{}".format(port)])
+            pids = [int(pid) for pid in pid_str.split()]
+            print("Killing process {}".format(pids))
+        except subprocess.CalledProcessError:
+            # No process listening on the port
+            return
+        if len(pids) == 0:
+            return
+        # Kill the processes
+        for pid in pids:
+            os.kill(pid, signal.SIGTERM)
+            # Wait for the processes to die
+            while os.path.exists("/proc/{}".format(pid)):
+                time.sleep(0.1)
 
         
 if __name__ == "__main__":

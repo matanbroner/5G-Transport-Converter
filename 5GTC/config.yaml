@@ -1,9 +1,9 @@
 network:
   ip: 192.168.2.221
-  port: 8083
+  port: 8085
 webui:
   host: 192.168.2.221
-  port: 5003
+  port: 5005
 log: INFO
 proxy:
   read_buffer_size: 4096
