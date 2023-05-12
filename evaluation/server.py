@@ -53,7 +53,7 @@ class MPTCPServer:
             t.join()
         self.sock.close()   
 
-    def read_client_header(sock):
+    def read_client_header(self, sock):
         # Read magic number
         magic_number = sock.recv(4)
         if magic_number != MAGIC_NUMBER:
@@ -72,7 +72,7 @@ class MPTCPServer:
         return ClientConnection(sock, int.from_bytes(client_type, "big"), int.from_bytes(buffer_size, "big"))
 
 
-    def handle_client(conn: ClientConnection):
+    def handle_client(self, conn: ClientConnection):
         # If client is an echo client, just echo the data back as we receive it
         if conn.type == 2:
             while True:
