@@ -41,7 +41,6 @@ class MPTCPServer:
             # Create connection object
             conn = self.read_client_header(client)
             if conn is None:
-                logger.error("Invalid connection")
                 client.close()
                 continue
             # Handle connection
@@ -57,17 +56,17 @@ class MPTCPServer:
         # Read magic number
         magic_number = sock.recv(4)
         if magic_number != MAGIC_NUMBER:
-            logger.error("Invalid magic number")
+            logger.error("Invalid magic number: %d" % magic_number)
             return None
         # Read client type (1 byte)
         client_type = sock.recv(1)
         if client_type not in CLIENT_TYPES:
-            logger.error("Invalid client type")
+            logger.error("Invalid client type: %d" % client_type)
             return None
         # Read buffer size (4 bytes)
         buffer_size = sock.recv(4)
         if buffer_size < 0:
-            logger.error("Invalid buffer size")
+            logger.error("Invalid buffer size: %d" % buffer_size)
             return None
         return ClientConnection(sock, int.from_bytes(client_type, "big"), int.from_bytes(buffer_size, "big"))
 
