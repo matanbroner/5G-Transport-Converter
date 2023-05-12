@@ -7,7 +7,7 @@ from collections import namedtuple
 
 logger = logging.getLogger("mptcp_server")
 
-MAGIC_NUMBER = 0xCAFEBABE
+MAGIC_NUMBER = 1423
 
 CLIENT_TYPES = {
     0: "UPLINK",
