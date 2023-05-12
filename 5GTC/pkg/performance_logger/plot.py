@@ -85,7 +85,7 @@ def plot_subflow_features(
         for i in range(len(subflow_data)):
             # Left pad the data with 0s so that all subflows have the same length
             subflow_data[i] = np.pad(
-                subflow_data[i], (0, number_iterations - len(subflow_data[i])), "constant"
+                subflow_data[i], (number_iterations - len(subflow_data[i]), 0), "constant"
             )
             ax.plot(subflow_data[i])
         # Set the title and labels
@@ -107,6 +107,7 @@ def plot_transfer(subflow_data, iteration_ms=500, subflow_keys=None):
     # Create a new figure
     fig = Figure()
     ax = fig.add_subplot(111)
+    number_iterations = max([len(subflow_data[subflow]["tcpi_bytes_acked"]) for subflow in subflow_data])
     for subflow in subflow_data:
         # Calculate the throughput
         iterations_per_minute = (60 * 1000) / iteration_ms

@@ -45,7 +45,7 @@ def plot_subflow_info_from_db(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot the data from a performance log")
-    parser.add_argument("--iteration_id", type=str, help="The iteration id to plot")
+    parser.add_argument("--iteration-id", type=str, help="The iteration id to plot")
     parser.add_argument("--field", type=str, help="The field to plot")
     parser.add_argument("--xlabel", type=str, help="The x-axis label", default=None)
     parser.add_argument("--ylabel", type=str, help="The y-axis label", default=None)
