@@ -7,7 +7,7 @@ from collections import namedtuple
 
 logger = logging.getLogger("mptcp_server")
 
-MAGIC_NUMBER = 1423
+MAGIC_NUMBER = 0xBEEF
 
 CLIENT_TYPES = {
     0: "UPLINK",
@@ -55,19 +55,19 @@ class MPTCPServer:
     def read_client_header(self, sock):
         # Read magic number
         magic_number = sock.recv(2)
-        magic_number = int.from_bytes(magic_number, "little")
+        magic_number = int.from_bytes(magic_number, "big")
         if magic_number != MAGIC_NUMBER:
             logger.error("Invalid magic number: %d" % magic_number)
             return None
         # Read client type (1 byte)
         client_type = sock.recv(1)
-        client_type = int.from_bytes(client_type, "little")
+        client_type = int.from_bytes(client_type, "big")
         if client_type not in CLIENT_TYPES:
             logger.error("Invalid client type: %d" % client_type)
             return None
         # Read buffer size (4 bytes)
         buffer_size = sock.recv(4)
-        buffer_size = int.from_bytes(buffer_size, "little")
+        buffer_size = int.from_bytes(buffer_size, "big")
         if buffer_size < 0:
             logger.error("Invalid buffer size: %d" % buffer_size)
             return None
