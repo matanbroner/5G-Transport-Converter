@@ -3,7 +3,7 @@ import sys
 import threading
 import logging
 from collections import namedtuple
-from .util import (
+from util import (
     MAGIC_NUMBER,
     DEFAULT_BUFFER_SIZE,
     CLIENT_TYPE_UPLINK,

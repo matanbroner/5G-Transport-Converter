@@ -6,7 +6,7 @@ import time
 import sys
 import argparse
 
-from .util import (
+from util import (
     generate_random_data_buffer, 
     MAGIC_NUMBER, 
     DEFAULT_BUFFER_SIZE,
