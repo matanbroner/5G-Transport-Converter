@@ -93,6 +93,9 @@ class MPTCPServer:
         
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
+    if len(sys.argv) != 3:
+        print("Usage: python3 server.py <host> <port>")
+        sys.exit(1)
     host, port = sys.argv[1], int(sys.argv[2])
     server = MPTCPServer(host, port)
     server.run()
