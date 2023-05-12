@@ -34,6 +34,8 @@
 #define DOWNLINK_CLIENT 1
 #define ECHO_CLIENT 2
 
+#define MAGIC_NUMBER 0xCAFEBABE
+
 int BYTES_READ = 0;
 int BYTES_WRITTEN = 0;
 int LOOP = 1;
@@ -157,6 +159,36 @@ int main(int argc, char **argv)
 
     // Set up signal handler for keyboard interrupt
     signal(SIGINT, sigint_handler);
+
+    // Send the server the magic number so it knows we're an MPTCP client
+    char *magic = malloc(4);
+    memset(magic, 0, 4);
+    magic[0] = MAGIC_NUMBER;
+    if (write(sockfd, magic, 4) < 0) {
+        log_color(RED, "write() failed for magic number");
+        return -1;
+    }
+    free(magic);
+
+    // Send the server a 1 byte message to tell it what type of client we are
+    char *client_type = malloc(1);
+    memset(client_type, 0, 1);
+    client_type[0] = CLIENT_TYPE;
+    if (write(sockfd, client_type, 1) < 0) {
+        log_color(RED, "write() failed for client type");
+        return -1;
+    }
+    free(client_type);
+
+    // Send the server the buffer size we're using
+    char *buffer_size_str = malloc(4);
+    memset(buffer_size_str, 0, 4);
+    memcpy(buffer_size_str, &buffer_size, 4);
+    if (write(sockfd, buffer_size_str, 4) < 0) {
+        log_color(RED, "write() failed for buffer size");
+        return -1;
+    }
+    free(buffer_size_str);
 
     while (LOOP) {
         char* buffer = malloc(buffer_size);
