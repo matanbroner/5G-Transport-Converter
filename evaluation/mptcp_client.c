@@ -35,7 +35,7 @@
 #define ECHO_CLIENT 2
 
 
-int MAGIC_NUMBER = 1423;
+int MAGIC_NUMBER = 0xBEEF;
 int BYTES_READ = 0;
 int BYTES_WRITTEN = 0;
 int LOOP = 1;
