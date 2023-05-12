@@ -1,3 +1,11 @@
+"""
+NOTE: This has not been successfully tested.
+Python wraps the basic socket(), connect(), etc. calls in a higher-level abstraction called a socket object.
+We cannot currently intercept these calls using lib_convert.
+
+This is left over in a broken state from Matan's testing!
+"""
+
 import socket
 import logging
 import threading

@@ -190,10 +190,9 @@ int main(int argc, char **argv)
     }
     free(buffer_size_str);
 
+    char* buffer = malloc(buffer_size);
     while (LOOP) {
-        char* buffer = malloc(buffer_size);
         memset(buffer, 0, buffer_size);
-        
         // if downlink client or echo client, read from server
         if (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT) {
             int bytes_read = read(sockfd, buffer, buffer_size);
@@ -227,6 +226,7 @@ int main(int argc, char **argv)
             memset(buffer, 0, buffer_size);
         }
     }
+    free(buffer);
     log_color(BLUE, "Closing connection...");
     close(sockfd);
     pthread_join(thread_id, NULL);
