@@ -1,5 +1,6 @@
 import socket
 import os
+import sys
 import threading
 import logging
 from collections import namedtuple
@@ -90,3 +91,8 @@ class MPTCPServer:
                 data = generate_random_data_buffer(conn.buffer_size)
                 conn.socket.sendall(data)
         
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    host, port = sys.argv[1], int(sys.argv[2])
+    server = MPTCPServer(host, port)
+    server.run()
