@@ -57,7 +57,8 @@ class MPTCPServer:
         magic_number = sock.recv(2)
         magic_number = int.from_bytes(magic_number, "litte")
         if magic_number != MAGIC_NUMBER:
-            logger.error("Invalid magic number: %d != " % magic_number, MAGIC_NUMBER)
+            logger.error("Invalid magic number: %d" % magic_number)
+            logger.error("Expected: %d" % MAGIC_NUMBER)
             return None
         # Read client type (1 byte)
         client_type = sock.recv(1)
