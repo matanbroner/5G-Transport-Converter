@@ -34,6 +34,7 @@ class MPTCPServer:
         self.cleanup()
 
     def run(self):
+        logger.info("Listening on %s:%d" % (self.host, self.port))
         while True:
             client, addr = self.sock.accept()
             logger.info("New connection from %s:%d" % addr)
