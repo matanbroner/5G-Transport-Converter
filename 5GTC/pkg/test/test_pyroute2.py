@@ -2,7 +2,7 @@
 
 import unittest
 import pyroute2.netlink.generic.mptcp as mptcp
-from test.util import (
+from pkg.test.util import (
     SysctlContext,
     TestMPTCPServer, 
     TestMPTCPClient,
@@ -41,16 +41,15 @@ class TestMPTCP(unittest.TestCase):
         ips = interface_ips(DEFAULT_NETWORK_INTERFACE)
         ips.remove(DEFAULT_NETWORK_IP)
         ip = ips[0]
-        with SysctlContext('net.mptcp.pm_type', 1):
-            res = self.mptcp.create(
-                local_ip=ip,
-                local_port=0,
-                local_id=1,
-                remote_ip=server.ip,
-                remote_port=server.port,
-                token=token
-            )
-            print(res)
+        res = self.mptcp.create(
+            local_ip=ip,
+            local_port=0,
+            local_id=1,
+            remote_ip=server.ip,
+            remote_port=server.port,
+            token=token
+        )
+        print(res)
 
 
         # Kill the client and server

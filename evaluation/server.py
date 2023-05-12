@@ -1,22 +1,18 @@
 import socket
-import os
 import sys
 import threading
 import logging
 from collections import namedtuple
+from evaluation.util import (
+    MAGIC_NUMBER,
+    DEFAULT_BUFFER_SIZE,
+    CLIENT_TYPE_UPLINK,
+    CLIENT_TYPE_DOWNLINK,
+    CLIENT_TYPE_ECHO,
+    generate_random_data_buffer
+)
 
 logger = logging.getLogger("mptcp_server")
-
-MAGIC_NUMBER = 0xBEEF
-
-CLIENT_TYPES = {
-    0: "UPLINK",
-    1: "DOWNLINK",
-    2: "ECHO"
-}
-
-def generate_random_data_buffer(size):
-    return os.urandom(size)
 
 ClientConnection = namedtuple("ClientConnection", ["socket", "type", "buffer_size"])
 
@@ -63,21 +59,21 @@ class MPTCPServer:
         # Read client type (1 byte)
         client_type = sock.recv(1)
         client_type = int.from_bytes(client_type, "little")
-        if client_type not in CLIENT_TYPES:
+        if client_type not in [CLIENT_TYPE_UPLINK, CLIENT_TYPE_DOWNLINK, CLIENT_TYPE_ECHO]]:
             logger.error("Invalid client type: %d" % client_type)
             return None
         # Read buffer size (4 bytes)
         buffer_size = sock.recv(4)
         buffer_size = int.from_bytes(buffer_size, "little")
         if buffer_size < 0:
-            logger.error("Invalid buffer size: %d" % buffer_size)
-            return None
+            logger.error("Invalid buffer size: %d. Using default buffer size." % buffer_size)
+            buffer_size = DEFAULT_BUFFER_SIZE
         return ClientConnection(sock, client_type, buffer_size)
 
 
     def handle_client(self, conn: ClientConnection):
         # If client is an echo client, just echo the data back as we receive it
-        if conn.type == 2:
+        if conn.type == CLIENT_TYPE_ECHO:
             #  Be the first to send data
             data = generate_random_data_buffer(conn.buffer_size)
             conn.socket.sendall(data)
@@ -87,13 +83,13 @@ class MPTCPServer:
                     break
                 conn.socket.sendall(data)
         # If client is an uplink client, read data from the socket and never send anything back
-        elif conn.type == 0:
+        elif conn.type == CLIENT_TYPE_UPLINK:
             while True:
                 data = conn.socket.recv(conn.buffer_size)
                 if not data:
                     break
         # If client is a downlink client, send random data to the client
-        elif conn.type == 1:
+        elif conn.type == CLIENT_TYPE_DOWNLINK:
             while True:
                 data = generate_random_data_buffer(conn.buffer_size)
                 conn.socket.sendall(data)

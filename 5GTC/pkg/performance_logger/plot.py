@@ -64,24 +64,29 @@ def plot_subflow_features(
         # Get subflow data for the feature
         subflow_data = [subflow[feature] for subflow in data.values()]
 
+        number_iterations = max([len(subflow) for subflow in subflow_data])
+
         # If fx_time, plot the x axis as time (in minutes)
         if fx_time:
             iterations_per_minute = (60 * 1000) / iteration_ms
             #  Number of ticks = (ms per iteration) * (number of iterations) all divided by 60,000 ms
-            num_minutes = ((len(subflow_data[0]) * iteration_ms) / 1000) / 60
+            num_minutes = ((len(number_iterations) * iteration_ms) / 1000) / 60
             # Round up to the nearest minute
             num_minutes = int(np.ceil(num_minutes))
             ticks_loc = np.arange(
-                0, len(subflow_data[0]) + iterations_per_minute, iterations_per_minute
+                0, len(number_iterations) + iterations_per_minute, iterations_per_minute
             )
             ax.set_xticks(ticks_loc)
             ax.set_xticklabels(np.arange(0, num_minutes + 1, 1))
             ax.set_xlabel(xlabel if xlabel else "Time (minutes)")
         else:
-            x = np.arange(0, len(subflow_data[0]))
             ax.set_xlabel(xlabel if xlabel else "Iteration")
         # Plot the data
         for i in range(len(subflow_data)):
+            # Left pad the data with 0s so that all subflows have the same length
+            subflow_data[i] = np.pad(
+                subflow_data[i], (0, number_iterations - len(subflow_data[i])), "constant"
+            )
             ax.plot(subflow_data[i])
         # Set the title and labels
         ax.set_title(title if title else feature)
