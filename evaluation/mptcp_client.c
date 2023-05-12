@@ -163,7 +163,7 @@ int main(int argc, char **argv)
     // Send the server the magic number so it knows we're an MPTCP client
     char *magic = malloc(4);
     memset(magic, 0, 4);
-    memcpy(magic, MAGIC_NUMBER, 4);
+    memcpy(magic, &MAGIC_NUMBER, 4);
     if (write(sockfd, magic, 4) < 0) {
         log_color(RED, "write() failed for magic number");
         return -1;
