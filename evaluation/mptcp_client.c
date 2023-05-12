@@ -34,7 +34,7 @@
 #define DOWNLINK_CLIENT 1
 #define ECHO_CLIENT 2
 
-#define MAGIC_NUMBER "MPTCP"
+#define MAGIC_NUMBER 1432
 
 int BYTES_READ = 0;
 int BYTES_WRITTEN = 0;
