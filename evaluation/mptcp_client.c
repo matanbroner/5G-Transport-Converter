@@ -34,7 +34,7 @@
 #define DOWNLINK_CLIENT 1
 #define ECHO_CLIENT 2
 
-#define MAGIC_NUMBER 1432
+#define MAGIC_NUMBER 0xBEEF
 
 int BYTES_READ = 0;
 int BYTES_WRITTEN = 0;
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
     // Send the server the magic number so it knows we're an MPTCP client
     char *magic = malloc(4);
     memset(magic, 0, 4);
-    magic[0] = MAGIC_NUMBER;
+    memcpy(magic, MAGIC_NUMBER, 4);
     if (write(sockfd, magic, 4) < 0) {
         log_color(RED, "write() failed for magic number");
         return -1;
