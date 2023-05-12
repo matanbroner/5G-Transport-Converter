@@ -78,6 +78,9 @@ class MPTCPServer:
     def handle_client(self, conn: ClientConnection):
         # If client is an echo client, just echo the data back as we receive it
         if conn.type == 2:
+            #  Be the first to send data
+            data = generate_random_data_buffer(conn.buffer_size)
+            conn.socket.sendall(data)
             while True:
                 data = conn.socket.recv(conn.buffer_size)
                 if not data:
