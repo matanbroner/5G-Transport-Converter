@@ -3,7 +3,7 @@ from pkg.performance_logger.plot import *
 from pkg.performance_logger.db import DB
 
 FIGURES_DIR = os.path.join(os.path.dirname(__file__), "figures")
-DB_NAME = "performance_log.db"
+DB_PATH = "performance_log.db"
 ITERATION_TIME_MS = 500
 
 
@@ -14,7 +14,7 @@ def plot_subflow_info_from_db(
     Plot the subflow info from a session_id
     """
     is_transfer_rate = field == "transfer_rate"
-    db = DB({"db_path": DB_NAME, "delete_db_on_exit": False})
+    db = DB({"db_path": DB_PATH, "delete_db_on_exit": False})
     subflows = db.read_all_subflows(iteration_id)
     key = "tcpi_bytes_acked" if is_transfer_rate else field
     data = {sf[1]: {key: []} for sf in subflows}
@@ -45,13 +45,17 @@ def plot_subflow_info_from_db(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot the data from a performance log")
-    parser.add_argument("--iteration_id", type=str, help="The iteration id to plot")
+    parser.add_argument("--iteration-id", type=str, help="The iteration id to plot")
     parser.add_argument("--field", type=str, help="The field to plot")
     parser.add_argument("--xlabel", type=str, help="The x-axis label", default=None)
     parser.add_argument("--ylabel", type=str, help="The y-axis label", default=None)
     parser.add_argument("--title", type=str, help="The title of the plot", default=None)
+    parser.add_argument("--db-path", type=str, help="The path to the database", default=DB_PATH)
     args = parser.parse_args()
 
     if not os.path.exists(FIGURES_DIR):
         os.makedirs(FIGURES_DIR)
+
+    DB_PATH = args.db_path
+
     plot_subflow_info_from_db(args.iteration_id, args.field, args.xlabel, args.ylabel, args.title)

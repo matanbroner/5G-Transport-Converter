@@ -92,7 +92,9 @@ class TCServer:
                     logger.debug("Accepted connection from {} with fd={}".format(addr, client_sock.fileno()))
                     logger.debug(client_sock)
 
-                    self.handle_connection(client_sock)
+                    success = self.handle_connection(client_sock)
+                    if not success:
+                        client_sock.close()
                 else:
                     # Read from the socket
                     self.read_and_forward(s)
@@ -103,18 +105,23 @@ class TCServer:
         Handle a new connection from a client
         Parses the Convert header and handles the TLVs
         """
-        # Read the Convert header from the client (TCP Fast Open)
-        convert = read_convert_header(client_sock)
-        if convert is None:
-            logger.error("Error reading Convert header from client")
-            return
-        
-        # Go through the TLVs and handle them
-        for tlv in convert.tlvs:
-            if CONVERT_TLVS[tlv.type] == "connect":
-                self.handle_tlv_connect(tlv, client_sock)
-            else:
-                logger.debug("Handled TLV: {}".format(CONVERT_TLVS[tlv.type]))
+        try:
+            # Read the Convert header from the client (TCP Fast Open)
+            convert = read_convert_header(client_sock)
+            if convert is None:
+                logger.error("Error reading Convert header from client")
+                return
+            
+            # Go through the TLVs and handle them
+            for tlv in convert.tlvs:
+                if CONVERT_TLVS[tlv.type] == "connect":
+                    self.handle_tlv_connect(tlv, client_sock)
+                else:
+                    logger.debug("Handled TLV: {}".format(CONVERT_TLVS[tlv.type]))
+            return True
+        except Exception as e:
+            logger.error("Error handling Convert Protocol header: {}".format(e))
+            return False
 
     def handle_tlv_connect(self, tlv, client_sock):
         """
