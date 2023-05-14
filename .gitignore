@@ -2,6 +2,7 @@ test
 *.db
 *.journal
 figures/
+config.yaml
 
 # Prerequisites
 *.d
