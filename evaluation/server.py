@@ -34,6 +34,7 @@ class MPTCPServer:
         while True:
             client, addr = self.sock.accept()
             logger.info("New connection from %s:%d" % addr)
+            logger.info("Socket FD: %d" % client.fileno())
             # Create connection object
             conn = self.read_client_header(client)
             if conn is None:
