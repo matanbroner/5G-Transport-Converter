@@ -20,6 +20,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <signal.h>
+#include <time.h>
 
 #define BUFFER_SIZE 100000
 #define REPORT_INTERVAL 1
@@ -191,6 +192,12 @@ int main(int argc, char **argv)
     free(buffer_size_str);
 
     char* buffer = malloc(buffer_size);
+    // Start clock to measure time to read magic number (if downlink/echo)
+    clock_t start, end;
+    double cpu_time_used;
+    if (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT) {
+        start = clock();
+    }
     while (LOOP) {
         memset(buffer, 0, buffer_size);
         // if downlink client or echo client, read from server
@@ -199,6 +206,18 @@ int main(int argc, char **argv)
             if (bytes_read < 0) {
                 log_color(RED, "read() failed");
                 return -1;
+            }
+            // if first two bytes are magic number, stop clock
+            int bytes = 0;
+            memcpy(&bytes, buffer, 2);
+            if (bytes == MAGIC_NUMBER) {
+                end = clock();
+                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+                log_color(GREEN, "Received magic number from server");
+                log_color(GREEN, "Time to receive magic number: %f", cpu_time_used);
+                // reset buffer and continue
+                memset(buffer, 0, buffer_size);
+                continue;
             }
             BYTES_READ += bytes_read;
             if (CLIENT_TYPE == DOWNLINK_CLIENT) {
