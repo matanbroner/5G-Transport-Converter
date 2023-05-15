@@ -2,6 +2,7 @@ import socket
 import sys
 import threading
 import logging
+import argparse
 from collections import namedtuple
 from util import (
     MAGIC_NUMBER,
@@ -11,20 +12,25 @@ from util import (
     CLIENT_TYPE_ECHO,
     generate_random_data_buffer
 )
+# Import PerformanceLogger from ../pkg/performance_logger/logger.py
+sys.path.append("..")
+from pkg.performance_logger import PerformanceLogger, WebUI
 
 logger = logging.getLogger("mptcp_server")
 
 ClientConnection = namedtuple("ClientConnection", ["socket", "type", "buffer_size"])
 
 class MPTCPServer:
-    def __init__(self, host, port):
+    def __init__(self, host, port, log_perf=False):
         self.host = host
         self.port = port
+        self.log_perf = log_perf
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_MPTCP)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.host, self.port))
         self.sock.listen(200)
         self.threads = []
+        self.performance_loggers = {}
 
     def __del__(self):
         self.cleanup()
@@ -34,12 +40,14 @@ class MPTCPServer:
         while True:
             client, addr = self.sock.accept()
             logger.info("New connection from %s:%d" % addr)
-            logger.info("Socket FD: %d" % client.fileno())
             # Create connection object
             conn = self.read_client_header(client)
             if conn is None:
                 client.close()
                 continue
+            # Create performance logger if needed
+            if self.log_perf:
+                self.performance_loggers[client.fileno()] = PerformanceLogger(client)
             # Handle connection
             t = threading.Thread(target=self.handle_client, args=(conn,)).start()
             self.threads.append(t)
@@ -47,6 +55,8 @@ class MPTCPServer:
     def cleanup(self):
         for t in self.threads:
             t.join()
+        for logger in self.performance_loggers.values():
+            logger.stop()
         self.sock.close()   
 
     def read_client_header(self, sock):
@@ -100,10 +110,25 @@ class MPTCPServer:
                 conn.socket.sendall(data)
         
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("host", help="IP address of the server")
+    parser.add_argument("port", type=int, help="Port number of the server")
+    parser.add_argument("--perf", action="store_true", help="Run server in performance log mode")
+    args = parser.parse_args()
+
     logging.basicConfig(level=logging.DEBUG)
-    if len(sys.argv) != 3:
-        print("Usage: python3 server.py <host> <port>")
+    if len(sys.argv) < 3:
+        print("Usage: python3 server.py <host> <port> [--perf]")
+        print ("\t<host>: IP address of the server")
+        print ("\t<port>: Port number of the server")
+        print ("\t--perf: Run server in performance log mode")
         sys.exit(1)
-    host, port = sys.argv[1], int(sys.argv[2])
-    server = MPTCPServer(host, port)
+    host, port = args.host, args.port
+
+    if args.perf:
+        # Init WebUI
+        webui = WebUI(host, 5000)
+        webui.run()
+
+    server = MPTCPServer(host, port, log_perf=args.perf)
     server.run()
