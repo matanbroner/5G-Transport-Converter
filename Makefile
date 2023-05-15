@@ -24,8 +24,7 @@ setup_transport_converter:
 	$(ENV_NAME)/bin/pip install --upgrade pip
 	$(ENV_NAME)/bin/pip install -r ./5GTC/requirements.txt
 	$(ENV_NAME)/bin/pip install install ./5GTC/pkg/mptcp_util
-	$(ENV_NAME)/bin/pip install install ./pyroute2
-
+	
 run_transport_converter:
 	cd 5GTC && ../$(ENV_NAME)/bin/python3 ./main.py
 
