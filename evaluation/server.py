@@ -50,7 +50,7 @@ class MPTCPServer:
 
     def read_client_header(self, sock):
         # Read magic number
-        magic_number = sock.recv(2)
+        magic_number = sock.recv(1)
         magic_number = int.from_bytes(magic_number, "little")
         if magic_number != MAGIC_NUMBER:
             logger.error("Invalid magic number: %d" % magic_number)

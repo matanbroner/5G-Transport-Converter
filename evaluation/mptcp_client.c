@@ -36,11 +36,12 @@
 #define ECHO_CLIENT 2
 
 
-int MAGIC_NUMBER = 0xBEEF;
+int MAGIC_NUMBER = 0x7F;
 int BYTES_READ = 0;
 int BYTES_WRITTEN = 0;
 int LOOP = 1;
 int CLIENT_TYPE = ECHO_CLIENT;
+int DOWNLOAD_SIZE = -1;
 
 void log_color(char *color, char *msg)
 {
@@ -93,6 +94,7 @@ int main(int argc, char **argv)
         printf("\t* server IP: the IP address of the server to connect to\n");
         printf("\t* server port: the port of the server to connect to\n");
         printf("\t* buffer size: the size of the buffer to use for reading/writing\n");
+        printf("\t* --download-size: the number of bytes to download from the server\n");
         printf("\t* --uplink: run as uplink client, send uplnik data and never read\n");
         printf("\t* --downlink: run as downlink client, read from server and never send\n");
         return -1;
@@ -110,7 +112,10 @@ int main(int argc, char **argv)
                 CLIENT_TYPE = UPLINK_CLIENT;
             } else if (strcmp(argv[i], "--downlink") == 0) {
                 CLIENT_TYPE = DOWNLINK_CLIENT;
-            } else {
+            } else if (strcmp(argv[i], "--download-size") == 0) {
+                DOWNLOAD_SIZE = atoi(argv[i+1]);
+                i++;
+            }  else {
                 buffer_size = atoi(argv[i]);
             }
         }
@@ -162,10 +167,10 @@ int main(int argc, char **argv)
     signal(SIGINT, sigint_handler);
 
     // Send the server the magic number so it knows we're an MPTCP client
-    char *magic = malloc(2);
-    memset(magic, 0, 2);
-    memcpy(magic, &MAGIC_NUMBER, 2);
-    if (write(sockfd, magic, 2) < 0) {
+    char *magic = malloc(1);
+    memset(magic, 0, 1);
+    memcpy(magic, &MAGIC_NUMBER, 1);
+    if (write(sockfd, magic, 1) < 0) {
         log_color(RED, "write() failed for magic number");
         return -1;
     }
@@ -208,9 +213,7 @@ int main(int argc, char **argv)
                 return -1;
             }
             // if first two bytes are magic number, stop clock
-            int bytes = 0;
-            memcpy(&bytes, buffer, 2);
-            if (bytes == MAGIC_NUMBER) {
+            if (buffer[0] == MAGIC_NUMBER) {
                 end = clock();
                 cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
                 log_color(GREEN, "Received magic number from server");
@@ -225,6 +228,10 @@ int main(int argc, char **argv)
                 // reset buffer and continue
                 memset(buffer, 0, buffer_size);
                 continue;
+            }
+            if (DOWNLOAD_SIZE != -1 && BYTES_READ >= DOWNLOAD_SIZE) {
+                log_color(GREEN, "Completed download of %d bytes", BYTES_READ);
+                break;
             }
         }
         // if uplink client or echo client, write to server
