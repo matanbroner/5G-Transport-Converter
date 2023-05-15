@@ -59,7 +59,7 @@ class MPTCPServer:
         # Read client type (1 byte)
         client_type = sock.recv(1)
         client_type = int.from_bytes(client_type, "little")
-        if client_type not in [CLIENT_TYPE_UPLINK, CLIENT_TYPE_DOWNLINK, CLIENT_TYPE_ECHO]]:
+        if client_type not in [CLIENT_TYPE_UPLINK, CLIENT_TYPE_DOWNLINK, CLIENT_TYPE_ECHO]:
             logger.error("Invalid client type: %d" % client_type)
             return None
         # Read buffer size (4 bytes)
