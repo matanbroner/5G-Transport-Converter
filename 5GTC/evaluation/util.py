@@ -19,5 +19,5 @@ COLORS = {
 }
 
 def generate_random_data_buffer(size):
-    data = ['!'] * size
+    data = [b'\x01'] * size
     return bytes(data)
