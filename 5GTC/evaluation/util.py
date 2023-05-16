@@ -19,4 +19,4 @@ COLORS = {
 }
 
 def generate_random_data_buffer(size):
-    return os.urandom(size)
+    return ['r' for _ in range(size)]
