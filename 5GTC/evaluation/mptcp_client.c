@@ -46,7 +46,15 @@ int UPLOAD_SIZE = -1;
 
 void log_color(char *color, char *msg)
 {
-    printf("[MPTCP Downlink Client] %s%s%s\n", color, msg, NORMAL);
+    char* client_type = malloc(20);
+    if (CLIENT_TYPE == UPLINK_CLIENT) {
+        client_type = "Uplink";
+    } else if (CLIENT_TYPE == DOWNLINK_CLIENT) {
+        client_type = "Downlink";
+    } else {
+        client_type = "Echo";
+    }
+    printf("[MPTCP %s Client] %s%s%s\n", client_type, color, msg, NORMAL);
 }
 
 // To be run in a separate thread
@@ -211,11 +219,17 @@ int main(int argc, char **argv)
 
     char* buffer = malloc(buffer_size);
     // Start clock to measure time to read magic number (if downlink/echo)
-    time_t start, magic_number_read, download_end, upload_end;
+    time_t start, magic_number_read, download_end, upload_end, end;
     double elapsed;
     time(&start);
 
     while (LOOP) {
+        time(&end);
+        elapsed = difftime(end, start);
+        char* msg = malloc(100);
+        sprintf(msg, "Time elapsed: %f", elapsed);
+        log_color(GREEN, msg);
+        free(msg);
         memset(buffer, 0, buffer_size);
         // if downlink client or echo client, read from server
         if (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT) {
