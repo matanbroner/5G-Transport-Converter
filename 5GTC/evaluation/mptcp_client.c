@@ -221,7 +221,6 @@ int main(int argc, char **argv)
     char* buffer = malloc(buffer_size);
     // Start clock to measure time to read magic number (if downlink/echo)
     struct timeval start, end;
-    long mtime; // elapsed time in milliseconds
     gettimeofday(&start, NULL); // capture the start time
 
     while (LOOP) {
@@ -288,7 +287,7 @@ int main(int argc, char **argv)
                 gettimeofday(&end, NULL);
                 double elapsed = (double)(end.tv_sec - start.tv_sec) * 1000.0;
                 elapsed += (double)(end.tv_usec - start.tv_usec) / 1000.0;
-                
+
                 log_color(GREEN, "Completed upload");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to upload %d bytes: %f", BYTES_WRITTEN, elapsed);
