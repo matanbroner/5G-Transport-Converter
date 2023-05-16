@@ -85,7 +85,7 @@ class MPTCPServer:
     def handle_client(self, conn: ClientConnection):
         # Send magic number first if client is an uplink client or a downlink client
         if conn.type in [CLIENT_TYPE_UPLINK, CLIENT_TYPE_DOWNLINK]:
-            conn.socket.sendall(MAGIC_NUMBER.to_bytes(2, "little"))
+            conn.socket.sendall(MAGIC_NUMBER.to_bytes(1, "little"))
         
         # If client is an echo client, just echo the data back as we receive it
         if conn.type == CLIENT_TYPE_ECHO:
