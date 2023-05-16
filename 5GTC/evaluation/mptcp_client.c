@@ -271,6 +271,7 @@ int main(int argc, char **argv)
     }
     free(buffer);
     log_color(BLUE, "Closing connection...");
+    LOOP = 0;
     close(sockfd);
     pthread_join(thread_id, NULL);
     return 0;
