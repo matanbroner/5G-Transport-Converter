@@ -211,7 +211,7 @@ int main(int argc, char **argv)
 
     char* buffer = malloc(buffer_size);
     // Start clock to measure time to read magic number (if downlink/echo)
-    time_t start, end;
+    time_t start, magic_number_read, download_end, upload_end;
     double elapsed;
     time(&start);
 
@@ -227,8 +227,8 @@ int main(int argc, char **argv)
 
             // if first two bytes are magic number, stop clock
             if (buffer[0] == MAGIC_NUMBER && (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT)) {
-                time(&end);
-                elapsed = difftime(end, start);
+                time(&magic_number_read);
+                elapsed = difftime(magic_number_read, start);
                 log_color(GREEN, "Received magic number from server");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to receive magic number: %f", elapsed);
@@ -240,8 +240,8 @@ int main(int argc, char **argv)
             }
             BYTES_READ += bytes_read;
             if (DOWNLOAD_SIZE != -1 && BYTES_READ >= DOWNLOAD_SIZE) {
-                time(&end);
-                elapsed = difftime(end, start);
+                time(&download_end);
+                elapsed = difftime(download_end, start);
                 log_color(GREEN, "Completed download");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to download %d bytes: %f", BYTES_READ, elapsed);
@@ -272,8 +272,8 @@ int main(int argc, char **argv)
             }
             BYTES_WRITTEN += bytes_written;
             if (UPLOAD_SIZE != -1 && BYTES_WRITTEN >= UPLOAD_SIZE) {
-                time(&end);
-                elapsed = difftime(end, start);
+                time(&upload_end);
+                elapsed = difftime(upload_end, start);
                 log_color(GREEN, "Completed upload");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to upload %d bytes: %f", BYTES_WRITTEN, elapsed);
