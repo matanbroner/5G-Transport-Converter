@@ -234,12 +234,6 @@ int main(int argc, char **argv)
                 continue;
             }
             BYTES_READ += bytes_read;
-            if (CLIENT_TYPE == DOWNLINK_CLIENT) {
-                // if downlink client, do not write back
-                // reset buffer and continue
-                memset(buffer, 0, buffer_size);
-                continue;
-            }
             if (DOWNLOAD_SIZE != -1 && BYTES_READ >= DOWNLOAD_SIZE) {
                 end = clock();
                 cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
@@ -249,6 +243,12 @@ int main(int argc, char **argv)
                 log_color(GREEN, msg);
                 free(msg);
                 break;
+            }
+            if (CLIENT_TYPE == DOWNLINK_CLIENT) {
+                // if downlink client, do not write back
+                // reset buffer and continue
+                memset(buffer, 0, buffer_size);
+                continue;
             }
         }
         // if uplink client or echo client, write to server
@@ -271,6 +271,7 @@ int main(int argc, char **argv)
     }
     free(buffer);
     log_color(BLUE, "Closing connection...");
+    LOOP = 0;
     close(sockfd);
     pthread_join(thread_id, NULL);
     return 0;
