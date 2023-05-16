@@ -93,6 +93,8 @@ class MPTCPServer:
             data = generate_random_data_buffer(conn.buffer_size)
             conn.socket.sendall(data)
             while True:
+                if conn.socket.fileno() == -1:
+                    break
                 data = conn.socket.recv(conn.buffer_size)
                 if not data:
                     break
@@ -100,12 +102,17 @@ class MPTCPServer:
         # If client is an uplink client, read data from the socket and never send anything back
         elif conn.type == CLIENT_TYPE_UPLINK:
             while True:
+                if conn.socket.fileno() == -1:
+                    break
                 data = conn.socket.recv(conn.buffer_size)
                 if not data:
                     break
         # If client is a downlink client, send random data to the client
         elif conn.type == CLIENT_TYPE_DOWNLINK:
             while True:
+                # If socket closed, break
+                if conn.socket.fileno() == -1:
+                    break
                 data = generate_random_data_buffer(conn.buffer_size)
                 conn.socket.sendall(data)
         
