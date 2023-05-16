@@ -212,7 +212,7 @@ int main(int argc, char **argv)
             }
             // print buffer as hex
             for (int i = 0; i < bytes_read; i++) {
-                printf("%02x", buffer[i]);
+                printf("|%02x|", buffer[i]);
             }
             printf("\n");
             // if first two bytes are magic number, stop clock
