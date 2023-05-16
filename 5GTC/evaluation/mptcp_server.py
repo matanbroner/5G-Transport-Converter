@@ -48,6 +48,7 @@ class MPTCPServer:
             # Create performance logger if needed
             if self.log_perf:
                 self.performance_loggers[client.fileno()] = PerformanceLogger(client)
+                self.performance_loggers[client.fileno()].run()
             # Handle connection
             t = threading.Thread(target=self.handle_client, args=(conn,)).start()
             self.threads.append(t)
