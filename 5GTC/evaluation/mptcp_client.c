@@ -121,6 +121,15 @@ int main(int argc, char **argv)
         }
         
     }
+    log_color(BLUE, "Starting client...");
+    char* msg = malloc(100);
+    sprintf(msg, "Local IP: %s, Server IP: %s, Server Port: %d, Buffer Size: %d", local_ip, server_ip, server_port, buffer_size);
+    log_color(BLUE, msg);
+    free(msg);
+    char* msg2 = malloc(100);
+    sprintf(msg2, "Client type: %d, Download size: %d", CLIENT_TYPE, DOWNLOAD_SIZE);
+    log_color(BLUE, msg2);
+    free(msg2);
 
     log_color(BLUE, "Starting client...");
     int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_MPTCP);
