@@ -271,6 +271,8 @@ int main(int argc, char **argv)
             }
             BYTES_WRITTEN += bytes_written;
             if (UPLOAD_SIZE != -1 && BYTES_WRITTEN >= UPLOAD_SIZE) {
+                end = clock();
+                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
                 log_color(GREEN, "Completed upload");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to upload %d bytes: %f", BYTES_WRITTEN, cpu_time_used);
