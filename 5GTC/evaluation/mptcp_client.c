@@ -211,9 +211,10 @@ int main(int argc, char **argv)
 
     char* buffer = malloc(buffer_size);
     // Start clock to measure time to read magic number (if downlink/echo)
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
+    time_t start, end;
+    double elapsed;
+    time(&start);
+
     while (LOOP) {
         memset(buffer, 0, buffer_size);
         // if downlink client or echo client, read from server
@@ -226,11 +227,11 @@ int main(int argc, char **argv)
 
             // if first two bytes are magic number, stop clock
             if (buffer[0] == MAGIC_NUMBER && (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT)) {
-                end = clock();
-                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+                time(&end);
+                elapsed = difftime(end, start);
                 log_color(GREEN, "Received magic number from server");
                 char* msg = malloc(100);
-                sprintf(msg, "Time to receive magic number: %f", cpu_time_used);
+                sprintf(msg, "Time to receive magic number: %f", elapsed);
                 log_color(GREEN, msg);
                 free(msg);
                 // reset buffer and continue
@@ -239,11 +240,11 @@ int main(int argc, char **argv)
             }
             BYTES_READ += bytes_read;
             if (DOWNLOAD_SIZE != -1 && BYTES_READ >= DOWNLOAD_SIZE) {
-                end = clock();
-                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+                time(&end);
+                elapsed = difftime(end, start);
                 log_color(GREEN, "Completed download");
                 char* msg = malloc(100);
-                sprintf(msg, "Time to download %d bytes: %f", BYTES_READ, cpu_time_used);
+                sprintf(msg, "Time to download %d bytes: %f", BYTES_READ, elapsed);
                 log_color(GREEN, msg);
                 free(msg);
                 break;
@@ -271,11 +272,11 @@ int main(int argc, char **argv)
             }
             BYTES_WRITTEN += bytes_written;
             if (UPLOAD_SIZE != -1 && BYTES_WRITTEN >= UPLOAD_SIZE) {
-                end = clock();
-                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+                time(&end);
+                elapsed = difftime(end, start);
                 log_color(GREEN, "Completed upload");
                 char* msg = malloc(100);
-                sprintf(msg, "Time to upload %d bytes: %f", BYTES_WRITTEN, cpu_time_used);
+                sprintf(msg, "Time to upload %d bytes: %f", BYTES_WRITTEN, elapsed);
                 log_color(GREEN, msg);
                 free(msg);
                 break;
