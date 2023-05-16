@@ -222,6 +222,7 @@ int main(int argc, char **argv)
     time_t start, magic_number_read, download_end, upload_end, end;
     double elapsed;
     time(&start);
+    
 
     while (LOOP) {
         time(&end);
