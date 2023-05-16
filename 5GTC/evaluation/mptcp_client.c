@@ -42,6 +42,7 @@ int BYTES_WRITTEN = 0;
 int LOOP = 1;
 int CLIENT_TYPE = ECHO_CLIENT;
 int DOWNLOAD_SIZE = -1;
+int UPLOAD_SIZE = -1;
 
 void log_color(char *color, char *msg)
 {
@@ -114,6 +115,9 @@ int main(int argc, char **argv)
                 CLIENT_TYPE = DOWNLINK_CLIENT;
             } else if (strcmp(argv[i], "--download-size") == 0) {
                 DOWNLOAD_SIZE = atoi(argv[i+1]);
+                i++;
+            } else if (strcmp(argv[i], "--upload-size") == 0) {
+                UPLOAD_SIZE = atoi(argv[i+1]);
                 i++;
             }  else {
                 buffer_size = atoi(argv[i]);
@@ -266,6 +270,14 @@ int main(int argc, char **argv)
                 return -1;
             }
             BYTES_WRITTEN += bytes_written;
+            if (UPLOAD_SIZE != -1 && BYTES_WRITTEN >= UPLOAD_SIZE) {
+                log_color(GREEN, "Completed upload");
+                char* msg = malloc(100);
+                sprintf(msg, "Time to upload %d bytes: %f", BYTES_WRITTEN, cpu_time_used);
+                log_color(GREEN, msg);
+                free(msg);
+                break;
+            }
             memset(buffer, 0, buffer_size);
         }
     }
