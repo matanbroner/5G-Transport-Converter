@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/time.h>
 
 #define BUFFER_SIZE 100000
 #define REPORT_INTERVAL 1
@@ -140,8 +141,7 @@ int main(int argc, char **argv)
     log_color(BLUE, msg);
     free(msg);
     char* msg2 = malloc(100);
-    sprintf(msg2, "Client type: %d, Download size: %d", CLIENT_TYPE, DOWNLOAD_SIZE);
-    log_color(BLUE, msg2);
+    sprintf(msg2, "Client type: %d, Download size: %d, Upload size: %d", CLIENT_TYPE, DOWNLOAD_SIZE, UPLOAD_SIZE);
     free(msg2);
 
     log_color(BLUE, "Starting client...");
@@ -220,8 +220,9 @@ int main(int argc, char **argv)
 
     char* buffer = malloc(buffer_size);
     // Start clock to measure time to read magic number (if downlink/echo)
-    clock_t start, magic_number_read, download_end, upload_end; 
-    start = clock();
+    struct timeval start, end;
+    long mtime; // elapsed time in milliseconds
+    gettimeofday(&start, NULL); // capture the start time
 
     while (LOOP) {
         memset(buffer, 0, buffer_size);
@@ -235,8 +236,9 @@ int main(int argc, char **argv)
 
             // if first two bytes are magic number, stop clock
             if (buffer[0] == MAGIC_NUMBER && (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT)) {
-                magic_number_read  = clock();
-                double elapsed = (double)(magic_number_read - start) / CLOCKS_PER_SEC;
+                gettimeofday(&end, NULL);
+                double elapsed = (double)(end.tv_sec - start.tv_sec) * 1000.0;
+                elapsed += (double)(end.tv_usec - start.tv_usec) / 1000.0;
 
                 log_color(GREEN, "Received magic number from server");
                 char* msg = malloc(100);
@@ -249,8 +251,10 @@ int main(int argc, char **argv)
             }
             BYTES_READ += bytes_read;
             if (DOWNLOAD_SIZE != -1 && BYTES_READ >= DOWNLOAD_SIZE) {
-                download_end = clock();
-                double elapsed = (double)(download_end - start) / CLOCKS_PER_SEC;
+                gettimeofday(&end, NULL);
+                double elapsed = (double)(end.tv_sec - start.tv_sec) * 1000.0;
+                elapsed += (double)(end.tv_usec - start.tv_usec) / 1000.0;
+
                 log_color(GREEN, "Completed download");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to download %d bytes: %f", BYTES_READ, elapsed);
@@ -281,8 +285,10 @@ int main(int argc, char **argv)
             }
             BYTES_WRITTEN += bytes_written;
             if (UPLOAD_SIZE != -1 && BYTES_WRITTEN >= UPLOAD_SIZE) {
-                upload_end = clock();
-                double elapsed = (double)(upload_end - start) / CLOCKS_PER_SEC;
+                gettimeofday(&end, NULL);
+                double elapsed = (double)(end.tv_sec - start.tv_sec) * 1000.0;
+                elapsed += (double)(end.tv_usec - start.tv_usec) / 1000.0;
+                
                 log_color(GREEN, "Completed upload");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to upload %d bytes: %f", BYTES_WRITTEN, elapsed);
