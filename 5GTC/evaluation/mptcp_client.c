@@ -200,9 +200,7 @@ int main(int argc, char **argv)
     // Start clock to measure time to read magic number (if downlink/echo)
     clock_t start, end;
     double cpu_time_used;
-    if (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT) {
-        start = clock();
-    }
+    start = clock();
     while (LOOP) {
         memset(buffer, 0, buffer_size);
         // if downlink client or echo client, read from server
@@ -213,11 +211,14 @@ int main(int argc, char **argv)
                 return -1;
             }
             // if first two bytes are magic number, stop clock
-            if (buffer[0] == MAGIC_NUMBER) {
+            if (buffer[0] == MAGIC_NUMBER && (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT)) {
                 end = clock();
                 cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
                 log_color(GREEN, "Received magic number from server");
-                log_color(GREEN, "Time to receive magic number: %f", cpu_time_used);
+                char* msg = malloc(100);
+                sprintf(msg, "Time to receive magic number: %f", cpu_time_used);
+                log_color(GREEN, msg);
+                free(msg);
                 // reset buffer and continue
                 memset(buffer, 0, buffer_size);
                 continue;
@@ -230,7 +231,10 @@ int main(int argc, char **argv)
                 continue;
             }
             if (DOWNLOAD_SIZE != -1 && BYTES_READ >= DOWNLOAD_SIZE) {
-                log_color(GREEN, "Completed download of %d bytes", BYTES_READ);
+                char* msg = malloc(100);
+                sprintf(msg, "Downloaded %d bytes", BYTES_READ);
+                log_color(GREEN, msg);
+                free(msg);
                 break;
             }
         }
