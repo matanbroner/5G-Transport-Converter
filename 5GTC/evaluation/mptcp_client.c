@@ -210,6 +210,8 @@ int main(int argc, char **argv)
                 log_color(RED, "read() failed");
                 return -1;
             }
+            // print buffer
+            printf("%s\n", buffer);
             // if first two bytes are magic number, stop clock
             if (buffer[0] == MAGIC_NUMBER && (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT)) {
                 end = clock();
