@@ -98,12 +98,13 @@ int main(int argc, char **argv)
 {
     // Args should be the local IP, server IP, server port
     if (argc < 4) {
-        printf("Usage: %s <local IP> <server IP> <server port> [buffer size] [--uplink | --downlink]\n", argv[0]);
+        printf("Usage: %s <local IP> <server IP> <server port> [buffer size] [--uplink | --downlink] [--download-size <bytes>] [--upload-size <bytes>]\n", argv[0]);
         printf("\t* local IP: the IP address of the interface to bind to\n");
         printf("\t* server IP: the IP address of the server to connect to\n");
         printf("\t* server port: the port of the server to connect to\n");
         printf("\t* buffer size: the size of the buffer to use for reading/writing\n");
         printf("\t* --download-size: the number of bytes to download from the server\n");
+        printf("\t* --upload-size: the number of bytes to upload to the server\n");
         printf("\t* --uplink: run as uplink client, send uplnik data and never read\n");
         printf("\t* --downlink: run as downlink client, read from server and never send\n");
         return -1;
@@ -219,18 +220,10 @@ int main(int argc, char **argv)
 
     char* buffer = malloc(buffer_size);
     // Start clock to measure time to read magic number (if downlink/echo)
-    time_t start, magic_number_read, download_end, upload_end, end;
-    double elapsed;
-    time(&start);
-    
+    clock_t start, magic_number_read, download_end, upload_end; 
+    start = clock();
 
     while (LOOP) {
-        time(&end);
-        elapsed = difftime(end, start);
-        char* msg = malloc(100);
-        sprintf(msg, "Time elapsed: %f", elapsed);
-        log_color(GREEN, msg);
-        free(msg);
         memset(buffer, 0, buffer_size);
         // if downlink client or echo client, read from server
         if (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT) {
@@ -242,8 +235,9 @@ int main(int argc, char **argv)
 
             // if first two bytes are magic number, stop clock
             if (buffer[0] == MAGIC_NUMBER && (CLIENT_TYPE == DOWNLINK_CLIENT || CLIENT_TYPE == ECHO_CLIENT)) {
-                time(&magic_number_read);
-                elapsed = difftime(magic_number_read, start);
+                magic_number_read  = clock();
+                double elapsed = (double)(magic_number_read - start) / CLOCKS_PER_SEC;
+
                 log_color(GREEN, "Received magic number from server");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to receive magic number: %f", elapsed);
@@ -255,8 +249,8 @@ int main(int argc, char **argv)
             }
             BYTES_READ += bytes_read;
             if (DOWNLOAD_SIZE != -1 && BYTES_READ >= DOWNLOAD_SIZE) {
-                time(&download_end);
-                elapsed = difftime(download_end, start);
+                download_end = clock();
+                double elapsed = (double)(download_end - magic_number_read) / CLOCKS_PER_SEC;
                 log_color(GREEN, "Completed download");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to download %d bytes: %f", BYTES_READ, elapsed);
@@ -287,8 +281,8 @@ int main(int argc, char **argv)
             }
             BYTES_WRITTEN += bytes_written;
             if (UPLOAD_SIZE != -1 && BYTES_WRITTEN >= UPLOAD_SIZE) {
-                time(&upload_end);
-                elapsed = difftime(upload_end, start);
+                upload_end = clock();
+                double elapsed = (double)(upload_end - magic_number_read) / CLOCKS_PER_SEC;
                 log_color(GREEN, "Completed upload");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to upload %d bytes: %f", BYTES_WRITTEN, elapsed);
