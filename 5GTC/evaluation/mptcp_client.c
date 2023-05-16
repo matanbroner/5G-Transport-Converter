@@ -231,8 +231,11 @@ int main(int argc, char **argv)
                 continue;
             }
             if (DOWNLOAD_SIZE != -1 && BYTES_READ >= DOWNLOAD_SIZE) {
+                end = clock();
+                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+                log_color(GREEN, "Completed download");
                 char* msg = malloc(100);
-                sprintf(msg, "Downloaded %d bytes", BYTES_READ);
+                sprintf(msg, "Time to download %d bytes: %f", BYTES_READ, cpu_time_used);
                 log_color(GREEN, msg);
                 free(msg);
                 break;
