@@ -250,7 +250,7 @@ int main(int argc, char **argv)
             BYTES_READ += bytes_read;
             if (DOWNLOAD_SIZE != -1 && BYTES_READ >= DOWNLOAD_SIZE) {
                 download_end = clock();
-                double elapsed = (double)(download_end - magic_number_read) / CLOCKS_PER_SEC;
+                double elapsed = (double)(download_end - start) / CLOCKS_PER_SEC;
                 log_color(GREEN, "Completed download");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to download %d bytes: %f", BYTES_READ, elapsed);
@@ -282,7 +282,7 @@ int main(int argc, char **argv)
             BYTES_WRITTEN += bytes_written;
             if (UPLOAD_SIZE != -1 && BYTES_WRITTEN >= UPLOAD_SIZE) {
                 upload_end = clock();
-                double elapsed = (double)(upload_end - magic_number_read) / CLOCKS_PER_SEC;
+                double elapsed = (double)(upload_end - start) / CLOCKS_PER_SEC;
                 log_color(GREEN, "Completed upload");
                 char* msg = malloc(100);
                 sprintf(msg, "Time to upload %d bytes: %f", BYTES_WRITTEN, elapsed);
