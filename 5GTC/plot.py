@@ -53,6 +53,8 @@ if __name__ == "__main__":
     parser.add_argument("--db-path", type=str, help="The path to the database", default=DB_PATH)
     args = parser.parse_args()
 
+    print("Plotting {} for iteration {}".format(args.field, args.iteration_id))
+    
     if not os.path.exists(FIGURES_DIR):
         os.makedirs(FIGURES_DIR)
 
